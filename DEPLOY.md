@@ -30,11 +30,11 @@ sudo chown -R $USER:$USER IlmiyJurnal
 cd IlmiyJurnal
 ```
 
-## 2. Production .env yaratish
+## 2. .env yaratish (root da, yagona fayl)
 
 ```bash
-cp backend/.env.prod.example backend/.env.prod
-nano backend/.env.prod
+cp .env.example .env
+nano .env
 ```
 
 To'ldirish kerak:
@@ -44,6 +44,7 @@ To'ldirish kerak:
 - `MAIL_*` — SMTP credentials (Gmail App Password yoki boshqa)
 - `APP_URL=https://science.asliddin.me`
 - `ALLOWED_ORIGINS=https://science.asliddin.me,https://www.science.asliddin.me`
+- `DEBUG=False`
 
 ## 3. Docker containerlarni ishga tushirish
 
@@ -51,7 +52,7 @@ To'ldirish kerak:
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-> **Diqqat**: `docker-compose.override.yml` development uchun — production da ishlatmang. Yuqoridagi buyruq faqat `prod.yml` ni qo'llaydi.
+> **Diqqat**: `docker-compose.override.yml` development uchun. Production da `-f docker-compose.yml -f docker-compose.prod.yml` flag-larini ishlating — bu override ni o'tkazib yuboradi.
 
 ## 4. Migration ishga tushirish
 

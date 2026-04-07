@@ -38,8 +38,11 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
     class Config:
+        # Env vars are injected by docker-compose env_file directive (single .env at project root)
+        # Local fallback: .env file in current working directory
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

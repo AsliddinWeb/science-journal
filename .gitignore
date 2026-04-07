@@ -13,17 +13,14 @@ Thumbs.db
 .vscode/
 *.sublime-*
 
-# ── Secrets / Env ──
+# ── Secrets / Env (single .env at project root) ──
 .env
 .env.local
 .env.*.local
 .env.prod
-backend/.env
-backend/.env.prod
-backend/.env.local
-frontend/.env
-frontend/.env.local
-frontend/.env.production
+.env.production
+# Keep .env.example tracked (template)
+!.env.example
 
 # ── Python (backend) ──
 __pycache__/

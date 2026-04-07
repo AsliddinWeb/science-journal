@@ -6,6 +6,7 @@ services:
   api:
     volumes:
       - ./backend:/app
+      - uploads_data:/app/uploads
     ports:
       - "8000:8000"
     environment:
@@ -24,3 +25,10 @@ services:
     environment:
       VITE_API_TARGET: "http://api:8000"
     command: npm run dev -- --host 0.0.0.0
+
+  nginx:
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads_data:/var/www/uploads:ro
