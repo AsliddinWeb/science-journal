@@ -1,0 +1,36 @@
+{
+  "name": "journal-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@types/uuid": "^10.0.0",
+    "@vue-office/pdf": "^2.0.10",
+    "@vueuse/core": "^11.1.0",
+    "axios": "^1.7.7",
+    "lucide-vue-next": "^0.447.0",
+    "marked": "^17.0.6",
+    "pinia": "^2.1.7",
+    "uuid": "^13.0.0",
+    "vue": "^3.4.0",
+    "vue-i18n": "^9.13.1",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^22.7.5",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.8",
+    "vue-tsc": "^2.1.6"
+  }
+}

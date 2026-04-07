@@ -1,0 +1,145 @@
+# ── OS / Editor ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# ── Secrets / Env ──
+.env
+.env.local
+.env.*.local
+.env.prod
+backend/.env
+backend/.env.prod
+backend/.env.local
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ── Python (backend) ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+develop-eggs/
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.python-version
+venv/
+env/
+ENV/
+.venv/
+
+# ── Node (frontend) ──
+node_modules/
+.npm
+.yarn-integrity
+.pnp.*
+.yarn/cache
+.yarn/install-state.gz
+.yarn/build-state.yml
+
+# Vite / build outputs
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.vite/
+frontend/coverage/
+frontend/.nuxt/
+frontend/.output/
+
+# TypeScript build cache
+*.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+frontend/tsconfig.node.tsbuildinfo
+
+# ── Logs ──
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Database / Data ──
+*.sqlite
+*.sqlite3
+*.db
+backend/uploads/
+backend/media/
+backend/static/
+
+# ── Docker ──
+# docker-compose.override.yml is shared dev config — KEPT in git
+# Use docker-compose.local.yml for personal customizations
+docker-compose.local.yml
+
+# ── Alembic ──
+# Migrations qoladi, lekin generated ones not
+# (manual migrations git da bo'lishi kerak)
+
+# ── Backups ──
+*.sql
+*.dump
+*.bak
+backups/
+backup/
+
+# ── Certificates ──
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+
+# ── Temporary ──
+tmp/
+temp/
+.cache/
+.tmp/
+
+# ── Coverage ──
+coverage/
+.nyc_output/
+
+# ── Misc ──
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.history
+
+# ── Project-specific ──
+# Local test files
+test_*.py
+*.test.local
+
+# IDE
+.devcontainer/local-*
