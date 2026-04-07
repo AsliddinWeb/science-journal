@@ -73,7 +73,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.models.user import User, UserRole
-from app.utils.security import get_password_hash
+from app.services.auth import hash_password
 import uuid
 
 async def create_admin():
@@ -84,7 +84,7 @@ async def create_admin():
             user = User(
                 id=uuid.uuid4(),
                 email='admin@science.asliddin.me',
-                password_hash=get_password_hash('CHANGE_ME_strong_password'),
+                password_hash=hash_password('CHANGE_ME_strong_password'),
                 full_name='Super Admin',
                 role=UserRole.superadmin,
                 is_active=True,
