@@ -46,7 +46,7 @@ const indexingLogos = [
         <div class="sm:col-span-2 lg:col-span-1">
           <RouterLink to="/" class="flex items-center gap-2.5">
             <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500">
-              <BookOpen :size="18" class="text-journal-900" />
+              <BookOpen :size="18" class="text-white" />
             </div>
             <span class="font-serif text-lg font-semibold text-primary-200">
               Science & Innovation

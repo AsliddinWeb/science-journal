@@ -204,7 +204,7 @@ async function downloadPdf() {
 
       <!-- Title & Authors -->
       <div>
-        <h1 class="font-serif text-2xl font-bold leading-tight text-journal-900 dark:text-white sm:text-3xl">
+        <h1 class="font-serif text-2xl font-bold leading-tight text-slate-900 dark:text-white sm:text-3xl">
           {{ title }}
         </h1>
 
@@ -259,7 +259,7 @@ async function downloadPdf() {
         <!-- PDF / XML action buttons -->
         <div v-if="article.pdf_file_path" class="mt-6 flex flex-wrap items-center gap-2">
           <button
-            class="inline-flex items-center gap-2 rounded-lg bg-primary-400 px-5 py-2.5 text-sm font-semibold text-journal-900 shadow-sm transition hover:bg-primary-500"
+            class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
             @click="showPdfPreview = true"
           >
             <FileText :size="16" />

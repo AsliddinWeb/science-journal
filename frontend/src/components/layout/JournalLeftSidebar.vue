@@ -36,34 +36,57 @@ const volumesByYear = computed(() => {
 
 <template>
   <aside class="w-full space-y-2">
-    <!-- Main nav buttons -->
+    <!-- 1. Home -->
     <RouterLink
       to="/"
-      exact-active-class="!bg-journal-800 !text-primary-300"
+      exact-active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
       <Home :size="16" />
       {{ t('nav.home') }}
     </RouterLink>
 
+    <!-- 2. Articles -->
     <RouterLink
-      to="/author/submit"
-      active-class="!bg-journal-800 !text-primary-300"
+      to="/articles"
+      active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
-      <Send :size="16" />
-      {{ t('nav.submit_article') }}
+      <Newspaper :size="16" />
+      {{ t('nav.articles') }}
     </RouterLink>
 
+    <!-- 3. Archive -->
     <RouterLink
-      to="/pages/author-guidelines"
+      to="/archive"
+      active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
-      <BookText :size="16" />
-      {{ t('nav.author_guidelines') }}
+      <ArchiveIcon :size="16" />
+      {{ t('nav.archive') }}
     </RouterLink>
 
-    <!-- Journal Info (collapsible) -->
+    <!-- 4. Conferences -->
+    <RouterLink
+      to="/conferences"
+      active-class="!bg-primary-700 !text-white"
+      class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
+    >
+      <Presentation :size="16" />
+      {{ t('nav.conferences') }}
+    </RouterLink>
+
+    <!-- 5. Editorial Board -->
+    <RouterLink
+      to="/editorial-board"
+      active-class="!bg-primary-700 !text-white"
+      class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
+    >
+      <UserCheck :size="16" />
+      {{ t('nav.editorial') }}
+    </RouterLink>
+
+    <!-- 6. Journal Info (collapsible) -->
     <div>
       <button
         class="flex w-full items-center justify-between gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
@@ -75,7 +98,7 @@ const volumesByYear = computed(() => {
         </span>
         <ChevronDown :size="14" class="transition-transform" :class="{ 'rotate-180': openGroups.has('info') }" />
       </button>
-      <div v-if="openGroups.has('info')" class="mt-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
+      <div v-if="openGroups.has('info')" class="mt-1 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
         <RouterLink to="/pages/about" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.about_journal') }}</RouterLink>
         <RouterLink to="/pages/aims" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.aims_scope') }}</RouterLink>
         <RouterLink to="/pages/indexing" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.indexing') }}</RouterLink>
@@ -84,54 +107,43 @@ const volumesByYear = computed(() => {
       </div>
     </div>
 
-    <!-- Editors -->
+    <!-- 7. For Authors (collapsible) -->
+    <div>
+      <button
+        class="flex w-full items-center justify-between gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
+        @click="toggle('authors')"
+      >
+        <span class="flex items-center gap-3">
+          <BookText :size="16" />
+          {{ t('nav.for_authors') }}
+        </span>
+        <ChevronDown :size="14" class="transition-transform" :class="{ 'rotate-180': openGroups.has('authors') }" />
+      </button>
+      <div v-if="openGroups.has('authors')" class="mt-1 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
+        <RouterLink to="/pages/author-guidelines" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.author_guidelines') }}</RouterLink>
+        <RouterLink to="/pages/review-process" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.review_process') }}</RouterLink>
+        <RouterLink to="/pages/plagiarism" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">Plagiarism</RouterLink>
+      </div>
+    </div>
+
+    <!-- 8. Submit Article — accent button -->
     <RouterLink
-      to="/editorial-board"
-      active-class="!bg-journal-800 !text-primary-300"
-      class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
+      to="/author/submit"
+      active-class="!bg-primary-700"
+      class="mt-3 flex items-center gap-3 rounded-lg bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700"
     >
-      <UserCheck :size="16" />
-      {{ t('nav.editorial') }}
+      <Send :size="16" />
+      {{ t('nav.submit_article') }}
     </RouterLink>
 
-    <!-- Conferences -->
-    <RouterLink
-      to="/conferences"
-      active-class="!bg-journal-800 !text-primary-300"
-      class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
-    >
-      <Presentation :size="16" />
-      {{ t('nav.conferences') }}
-    </RouterLink>
-
-    <!-- Contact -->
+    <!-- 9. Contact -->
     <RouterLink
       to="/contact"
-      active-class="!bg-journal-800 !text-primary-300"
+      active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
       <Mail :size="16" />
       {{ t('nav.contact') }}
-    </RouterLink>
-
-    <!-- Archives section -->
-    <div class="pt-4">
-      <RouterLink
-        to="/archive"
-        active-class="!bg-primary-100 !text-primary-800"
-        class="flex items-center gap-3 rounded-lg bg-white border border-stone-200 px-4 py-3 text-sm font-semibold text-journal-800 transition hover:bg-stone-50 hover:border-primary-300 dark:bg-slate-800 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-slate-700"
-      >
-        <ArchiveIcon :size="16" />
-        {{ t('nav.archive') }}
-      </RouterLink>
-    </div>
-
-    <RouterLink
-      to="/articles"
-      class="flex items-center gap-3 rounded-lg bg-white border border-stone-200 px-4 py-3 text-sm font-semibold text-journal-800 transition hover:bg-stone-50 hover:border-primary-300 dark:bg-slate-800 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-slate-700"
-    >
-      <Newspaper :size="16" />
-      {{ t('nav.articles') }}
     </RouterLink>
 
     <!-- Volumes (collapsible) -->

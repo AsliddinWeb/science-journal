@@ -149,7 +149,7 @@ watch(locale, () => nextTick(buildToc))
 
       <!-- Title -->
       <div class="border-b-2 border-primary-400 pb-4">
-        <h1 class="font-serif text-3xl font-bold text-journal-900 dark:text-white sm:text-4xl">{{ title }}</h1>
+        <h1 class="font-serif text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">{{ title }}</h1>
       </div>
 
       <div class="grid gap-8 lg:grid-cols-[1fr_220px]">

@@ -8,21 +8,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary: warm amber/gold (anowa-style)
+        // Primary: deep blue (uobs.uz inspired)
         primary: {
-          50:  '#fdf9ed',
-          100: '#faf1d4',
-          200: '#f5e0a4',
-          300: '#eec96b',
-          400: '#e7b23e',
-          500: '#d99925',
-          600: '#bc781c',
-          700: '#97581b',
-          800: '#7c451e',
-          900: '#67391d',
-          950: '#3b1d0c',
+          50:  '#eef4ff',
+          100: '#dae6ff',
+          200: '#bdd2ff',
+          300: '#90b3ff',
+          400: '#6189ff',
+          500: '#3d63f7',
+          600: '#2742ec',
+          700: '#1f31d4',
+          800: '#1f2cab',
+          900: '#1e2c87',
+          950: '#161b50',
         },
-        // Cream/beige background tones - subtle warm neutrals
+        // Subtle warm neutrals (kept for content cards)
         cream: {
           50:  '#fafaf9',
           100: '#f5f5f4',
@@ -30,19 +30,19 @@ export default {
           300: '#d6d3d1',
           400: '#a8a29e',
         },
-        // Dark brown (header/sidebar)
+        // Deep navy blue (header/sidebar — was brown)
         journal: {
-          50:  '#f7f4ef',
-          100: '#ebe4d6',
-          200: '#d6c7ac',
-          300: '#b9a078',
-          400: '#997e50',
-          500: '#7d6640',
-          600: '#5e4a2d',
-          700: '#443421',
-          800: '#2f2417',
-          900: '#1d160e',
-          950: '#0f0b07',
+          50:  '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#3b4ec5',
+          600: '#2a3ba8',
+          700: '#1f2c7d',
+          800: '#162055',
+          900: '#0e1638',
+          950: '#070b1f',
         },
       },
       fontFamily: {

@@ -88,7 +88,7 @@ const isActive = (path: string) => route.path.startsWith(path)
         <!-- Logo -->
         <RouterLink to="/" class="flex items-center gap-3 shrink-0">
           <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-500 shadow-md">
-            <BookOpen :size="22" class="text-journal-900" />
+            <BookOpen :size="22" class="text-white" />
           </div>
           <div class="hidden sm:block">
             <span class="block font-serif text-xl font-bold text-primary-200 leading-tight">
@@ -211,7 +211,7 @@ const isActive = (path: string) => route.path.startsWith(path)
           <template v-if="authStore.isAuthenticated">
             <RouterLink
               to="/author/submit"
-              class="hidden items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-xs font-semibold text-journal-900 shadow-sm transition hover:bg-primary-400 sm:inline-flex"
+              class="hidden items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:inline-flex"
             >
               {{ t('nav.submit') }}
             </RouterLink>
@@ -223,7 +223,7 @@ const isActive = (path: string) => route.path.startsWith(path)
               >
                 <div
                   v-if="!authStore.user?.avatar_url"
-                  class="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-semibold text-journal-900"
+                  class="flex h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white"
                 >
                   {{ authStore.user?.full_name ? getInitials(authStore.user.full_name) : 'U' }}
                 </div>
@@ -290,7 +290,7 @@ const isActive = (path: string) => route.path.startsWith(path)
             </RouterLink>
             <RouterLink
               to="/login"
-              class="hidden items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-journal-900 shadow-sm transition hover:bg-primary-400 sm:inline-flex"
+              class="hidden items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:inline-flex"
             >
               <LogIn :size="15" />
               {{ t('nav.login') }}

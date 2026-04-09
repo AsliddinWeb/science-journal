@@ -139,7 +139,7 @@ const statItems = computed(() => [
       <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{{ ctaSubtitle }}</p>
       <RouterLink
         to="/author/submit"
-        class="mt-5 inline-flex items-center gap-2 rounded-lg border-2 border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-bold text-journal-900 shadow-sm transition hover:bg-primary-400"
+        class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700"
       >
         <Send :size="16" />
         {{ t('home.apply_now') }}
