@@ -15,8 +15,8 @@ const showSidebars = computed(() => !fullWidthRoutes.includes(route.name as stri
 </script>
 
 <template>
-  <div class="relative min-h-screen flex flex-col bg-journal-900 dark:bg-journal-950">
-    <!-- Animated constellation background -->
+  <div class="relative min-h-screen flex flex-col bg-slate-50 dark:bg-journal-900">
+    <!-- Animated constellation background (dark mode only) -->
     <ConstellationBackground />
 
     <div class="relative z-10 flex min-h-screen flex-col">

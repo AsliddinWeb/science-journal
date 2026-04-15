@@ -95,7 +95,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="pointer-events-none fixed inset-0 z-0">
+  <div class="pointer-events-none fixed inset-0 z-0 hidden dark:block">
     <canvas ref="canvasRef" class="h-full w-full" />
     <!-- Radial gradient overlay for depth -->
     <div class="absolute inset-0 bg-gradient-radial from-primary-900/30 via-transparent to-journal-950/40" />

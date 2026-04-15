@@ -58,13 +58,6 @@ function getTitle(article: ArticleItem): string {
 
 const quickActions = computed(() => [
   {
-    icon: FilePlus,
-    label: t('author.dashboard.submit_new'),
-    desc: t('author.dashboard.submit_new_desc'),
-    to: { name: 'submit-article' },
-    color: 'bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400',
-  },
-  {
     icon: BookOpen,
     label: t('author.dashboard.view_guidelines'),
     desc: t('author.dashboard.view_guidelines_desc'),
@@ -155,9 +148,6 @@ onMounted(load)
               <ExternalLink :size="13" />ORCID: {{ user.orcid_id }}
             </a>
           </div>
-          <router-link :to="{ name: 'submit-article' }" class="btn-primary hidden sm:inline-flex">
-            <FilePlus :size="16" />{{ t('author.dashboard.submit_new') }}
-          </router-link>
         </div>
       </div>
     </div>

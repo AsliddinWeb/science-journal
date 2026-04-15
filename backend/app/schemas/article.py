@@ -82,7 +82,7 @@ class AdminArticleCreate(BaseModel):
     """Admin can create article on behalf of any user and set any field."""
     title: dict
     abstract: dict
-    keywords: List[str] = []
+    keywords: Any = []  # list[str] or dict {"uz": [...], "ru": [...], "en": [...]}
     language: ArticleLanguage = ArticleLanguage.uz
     category_id: Optional[UUID] = None
     volume_id: Optional[UUID] = None
@@ -91,11 +91,13 @@ class AdminArticleCreate(BaseModel):
     co_authors: List[ArticleAuthorCreate] = []
     status: ArticleStatus = ArticleStatus.draft
     doi: Optional[str] = None
+    published_date: Optional[datetime] = None
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
     cover_letter: Optional[str] = None
     article_type: Optional[str] = None
+    pages: Optional[str] = None
     references: Optional[List[str]] = None
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
@@ -113,7 +115,7 @@ class AdminArticleUpdate(BaseModel):
     """Admin can update any field of any article."""
     title: Optional[dict] = None
     abstract: Optional[dict] = None
-    keywords: Optional[List[str]] = None
+    keywords: Optional[Any] = None  # list[str] or dict
     language: Optional[ArticleLanguage] = None
     category_id: Optional[UUID] = None
     volume_id: Optional[UUID] = None
@@ -121,11 +123,13 @@ class AdminArticleUpdate(BaseModel):
     author_id: Optional[UUID] = None
     status: Optional[ArticleStatus] = None
     doi: Optional[str] = None
+    published_date: Optional[datetime] = None
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
     cover_letter: Optional[str] = None
     article_type: Optional[str] = None
+    pages: Optional[str] = None
     references: Optional[List[str]] = None
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
@@ -173,6 +177,7 @@ class ArticleRead(BaseModel):
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
     article_type: Optional[str] = None
+    pages: Optional[str] = None
     cover_letter: Optional[str] = None
     references: Optional[List[Any]] = None
     funding: Optional[str] = None

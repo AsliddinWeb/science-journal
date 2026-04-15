@@ -63,7 +63,6 @@ function getInitials(name: string): string {
 }
 
 const forAuthorsLinks = computed(() => [
-  { to: '/author/submit', icon: PenLine, label: t('nav.submit_article') },
   { to: '/pages/author-guidelines', icon: FileText, label: t('nav.author_guidelines') },
   { to: '/pages/review-process', icon: Shield, label: t('nav.review_process') },
   { to: '/pages/open-access', icon: Globe2, label: t('nav.open_access') },
@@ -209,13 +208,6 @@ const isActive = (path: string) => route.path.startsWith(path)
 
           <!-- Authenticated -->
           <template v-if="authStore.isAuthenticated">
-            <RouterLink
-              to="/author/submit"
-              class="hidden items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:inline-flex"
-            >
-              {{ t('nav.submit') }}
-            </RouterLink>
-
             <div class="relative" data-dropdown>
               <button
                 class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-primary-200 transition-colors hover:bg-white/10"
@@ -391,7 +383,6 @@ const isActive = (path: string) => route.path.startsWith(path)
                   <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ authStore.user?.email }}</p>
                 </div>
               </div>
-              <RouterLink to="/author/submit" class="btn-primary text-center">{{ t('nav.submit') }}</RouterLink>
               <RouterLink to="/author/dashboard" class="btn-ghost text-center">{{ t('nav.dashboard') }}</RouterLink>
               <button class="btn-ghost text-center text-red-600 dark:text-red-400" @click="handleLogout">{{ t('nav.logout') }}</button>
             </template>

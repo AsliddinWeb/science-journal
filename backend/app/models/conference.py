@@ -115,9 +115,11 @@ class ConferencePaper(Base):
     pdf_file_path: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     pdf_file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    pages: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     status: Mapped[ConferencePaperStatus] = mapped_column(
-        Enum(ConferencePaperStatus), nullable=False, default=ConferencePaperStatus.draft, index=True
+        Enum(ConferencePaperStatus, name="conferencespaperstatus", create_constraint=False),
+        nullable=False, default=ConferencePaperStatus.draft, index=True
     )
     published_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

@@ -3,8 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
-  Download, Share2, Copy, Check, Eye, ChevronRight,
-  BookOpen, Tag, Calendar, Globe, Hash, AlertCircle, RefreshCw, ChevronDown
+  Download, Share2, Copy, Check, Eye, ChevronRight, FileText,
+  BookOpen, Tag, Calendar, Globe, Hash, AlertCircle, RefreshCw
 } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useLocaleStore } from '@/stores/locale'
@@ -13,7 +13,7 @@ import { formatDate } from '@/utils/formatDate'
 import type { Article, PaginatedResponse } from '@/types/article'
 import AuthorsList from '@/components/article/AuthorsList.vue'
 import ArticleAbstract from '@/components/article/ArticleAbstract.vue'
-import CitationBox from '@/components/article/CitationBox.vue'
+// CitationBox removed — inline "How to Cite" used instead
 import ArticleCard from '@/components/article/ArticleCard.vue'
 import CoverImage from '@/components/ui/CoverImage.vue'
 import PdfPreview from '@/components/ui/PdfPreview.vue'
@@ -37,7 +37,7 @@ const related = ref<Article[]>([])
 const loading = ref(true)
 const error = ref(false)
 const copied = ref(false)
-const showCitation = ref(false)
+const citationCopied = ref(false)
 const showPdfPreview = ref(false)
 const homeSettings = ref<HomeSettingsData | null>(null)
 
@@ -166,6 +166,33 @@ async function downloadPdf() {
       window.open(path, '_blank')
     }
   }
+}
+
+const citationText = computed(() => {
+  const a = article.value
+  if (!a) return ''
+  const articleTitle = (a.title as any)?.en || (a.title as any)?.uz || 'Untitled'
+  const year = a.published_date ? new Date(a.published_date).getFullYear() : ''
+  const hs = homeSettings.value
+  const journalName = hs?.hero_title?.en || hs?.hero_title?.uz || 'Science and Innovation'
+  const vol = a.volume_id ? '' : '' // volume/issue from article data if available
+  const pages = (a as any).pages || ''
+  const doi = a.doi ? `https://doi.org/${a.doi}` : ''
+
+  // Build: TITLE. (YEAR). JOURNAL NAME, pages. DOI_URL
+  let citation = `${articleTitle}.`
+  if (year) citation += ` (${year}).`
+  citation += ` ${journalName}`
+  if (pages) citation += `, ${pages}`
+  citation += '.'
+  if (doi) citation += ` ${doi}`
+  return citation
+})
+
+async function copyCitation() {
+  await navigator.clipboard.writeText(citationText.value)
+  citationCopied.value = true
+  setTimeout(() => { citationCopied.value = false }, 2000)
 }
 </script>
 
@@ -328,32 +355,21 @@ async function downloadPdf() {
               </ol>
             </section>
 
-            <!-- Citation -->
-            <section>
+            <!-- How to Cite -->
+            <section class="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-3 flex items-center gap-2 font-serif font-semibold text-slate-900 dark:text-white">
+                <BookOpen :size="18" />
+                {{ t('article.cite') }}
+              </div>
+              <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{{ citationText }}</p>
               <button
-                class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-left dark:border-slate-700 dark:bg-slate-900"
-                @click="showCitation = !showCitation"
+                class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                @click="copyCitation"
               >
-                <div class="flex items-center gap-2 font-serif font-semibold text-slate-900 dark:text-white">
-                  <BookOpen :size="18" />
-                  {{ t('article.cite') }}
-                </div>
-                <ChevronDown
-                  :size="18"
-                  class="text-slate-400 transition-transform"
-                  :class="{ 'rotate-180': showCitation }"
-                />
+                <Check v-if="citationCopied" :size="13" class="text-green-500" />
+                <Copy v-else :size="13" />
+                {{ citationCopied ? t('article.copied') : 'Copy' }}
               </button>
-              <Transition
-                enter-active-class="transition-all duration-200 ease-out"
-                enter-from-class="opacity-0 -translate-y-2"
-                leave-active-class="transition-all duration-150 ease-in"
-                leave-to-class="opacity-0 -translate-y-2"
-              >
-                <div v-if="showCitation" class="mt-2">
-                  <CitationBox :article="article" />
-                </div>
-              </Transition>
             </section>
           </div>
 

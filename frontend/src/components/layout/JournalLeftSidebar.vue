@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  Home, Send, BookText, Info, ChevronDown, Users, UserCheck,
+  Home, BookText, Info, ChevronDown, Users, UserCheck,
   Archive as ArchiveIcon, Mail, Newspaper, Presentation,
 } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
@@ -125,16 +125,6 @@ const volumesByYear = computed(() => {
         <RouterLink to="/pages/plagiarism" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">Plagiarism</RouterLink>
       </div>
     </div>
-
-    <!-- 8. Submit Article — accent button -->
-    <RouterLink
-      to="/author/submit"
-      active-class="!bg-primary-700"
-      class="mt-3 flex items-center gap-3 rounded-lg bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700"
-    >
-      <Send :size="16" />
-      {{ t('nav.submit_article') }}
-    </RouterLink>
 
     <!-- 9. Contact -->
     <RouterLink

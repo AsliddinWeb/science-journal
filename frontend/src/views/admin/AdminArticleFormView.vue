@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Plus, X, Upload, Loader2 } from 'lucide-vue-next'
+import { ArrowLeft, X, Upload, Loader2, Plus } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -51,7 +51,7 @@ interface CoAuthorForm {
 const form = reactive({
   title: { uz: '', ru: '', en: '' },
   abstract: { uz: '', ru: '', en: '' },
-  keywords: [] as string[],
+  keywords: { uz: '', ru: '', en: '' },
   language: 'uz' as string,
   category_id: '',
   volume_id: '',
@@ -60,6 +60,8 @@ const form = reactive({
   author_name: '',
   status: 'draft' as string,
   doi: '',
+  published_date: '',
+  pages: '',
   pdf_file_path: '',
   pdf_file_size: null as number | null,
   article_type: '',
@@ -71,8 +73,6 @@ const form = reactive({
   co_authors: [] as CoAuthorForm[],
 })
 
-const keywordInput = ref('')
-
 // Load article for edit
 async function loadArticle() {
   loading.value = true
@@ -80,7 +80,15 @@ async function loadArticle() {
     const data = await api.get<Article>(`/api/articles/${articleId.value}`)
     form.title = { uz: data.title.uz || '', ru: data.title.ru || '', en: data.title.en || '' }
     form.abstract = { uz: data.abstract.uz || '', ru: data.abstract.ru || '', en: data.abstract.en || '' }
-    form.keywords = data.keywords || []
+    if (Array.isArray(data.keywords)) {
+      form.keywords = { uz: data.keywords.join(', '), ru: '', en: '' }
+    } else {
+      form.keywords = {
+        uz: (data.keywords?.uz || []).join(', '),
+        ru: (data.keywords?.ru || []).join(', '),
+        en: (data.keywords?.en || []).join(', '),
+      }
+    }
     form.language = data.language
     form.category_id = data.category_id || ''
     form.volume_id = data.volume_id || ''
@@ -89,6 +97,8 @@ async function loadArticle() {
     form.author_name = data.author?.full_name || ''
     form.status = data.status
     form.doi = data.doi || ''
+    form.published_date = data.published_date ? data.published_date.split('T')[0] : ''
+    form.pages = data.pages || ''
     form.pdf_file_path = data.pdf_file_path || ''
     form.pdf_file_size = data.pdf_file_size || null
     form.article_type = data.article_type || ''
@@ -147,14 +157,6 @@ function selectUser(u: { id: string; full_name: string; email: string }) {
   showUserDropdown.value = false
 }
 
-// Keywords
-function addKeyword() {
-  const kw = keywordInput.value.trim()
-  if (kw && !form.keywords.includes(kw)) form.keywords.push(kw)
-  keywordInput.value = ''
-}
-function removeKeyword(i: number) { form.keywords.splice(i, 1) }
-
 // Co-authors
 function addCoAuthor() {
   form.co_authors.push({ guest_name: '', guest_email: '', guest_affiliation: '', guest_orcid: '', is_corresponding: false })
@@ -189,7 +191,11 @@ async function save() {
     const payload = {
       title: form.title,
       abstract: form.abstract,
-      keywords: form.keywords,
+      keywords: {
+        uz: form.keywords.uz ? form.keywords.uz.split(',').map(s => s.trim()).filter(Boolean) : [],
+        ru: form.keywords.ru ? form.keywords.ru.split(',').map(s => s.trim()).filter(Boolean) : [],
+        en: form.keywords.en ? form.keywords.en.split(',').map(s => s.trim()).filter(Boolean) : [],
+      },
       language: form.language,
       category_id: form.category_id || null,
       volume_id: form.volume_id || null,
@@ -197,6 +203,8 @@ async function save() {
       author_id: form.author_id,
       status: form.status,
       doi: form.doi || null,
+      published_date: form.published_date || null,
+      pages: form.pages || null,
       pdf_file_path: form.pdf_file_path || null,
       pdf_file_size: form.pdf_file_size || null,
       article_type: form.article_type || null,
@@ -296,6 +304,19 @@ onMounted(async () => {
           </div>
         </div>
 
+        <div class="mb-4 grid grid-cols-2 gap-4">
+          <!-- Published date -->
+          <div>
+            <label class="label-base">Chop etilgan sana</label>
+            <input v-model="form.published_date" type="date" class="input-base w-full" />
+          </div>
+          <!-- Pages -->
+          <div>
+            <label class="label-base">Sahifalar</label>
+            <input v-model="form.pages" class="input-base w-full" placeholder="82-86" />
+          </div>
+        </div>
+
         <!-- Author selector -->
         <div class="mb-4">
           <label class="label-base">{{ t('admin.articles.author') }} *</label>
@@ -390,24 +411,26 @@ onMounted(async () => {
       <!-- ── Keywords ───────────────────────────────────────── -->
       <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">{{ t('article.keywords') }}</h2>
-        <div class="mb-3 flex flex-wrap gap-2">
-          <span
-            v-for="(kw, i) in form.keywords"
-            :key="i"
-            class="flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-800 dark:bg-primary-900/40 dark:text-primary-300"
-          >
-            {{ kw }}
-            <button class="ml-0.5 text-primary-400 hover:text-primary-700" @click="removeKeyword(i)"><X :size="12" /></button>
-          </span>
+
+        <!-- Lang tabs for keywords -->
+        <div class="mb-4 flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/50">
+          <button
+            v-for="lang in (['uz', 'ru', 'en'] as const)"
+            :key="lang"
+            class="rounded-md px-4 py-1.5 text-sm font-medium transition"
+            :class="langTab === lang ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700'"
+            @click="langTab = lang"
+          >{{ lang.toUpperCase() }}</button>
         </div>
-        <div class="flex gap-2">
-          <input
-            v-model="keywordInput"
-            class="input-base flex-1"
-            :placeholder="t('author.submit.keywords_placeholder')"
-            @keyup.enter="addKeyword"
+
+        <div>
+          <label class="label-base">{{ t('article.keywords') }} ({{ langTab.toUpperCase() }})</label>
+          <textarea
+            v-model="form.keywords[langTab]"
+            rows="3"
+            class="input-base w-full resize-none"
+            :placeholder="`Kalit so'zlar vergul bilan ajratilgan (${langTab})...`"
           />
-          <AppButton variant="secondary" @click="addKeyword"><Plus :size="15" /></AppButton>
         </div>
       </section>
 

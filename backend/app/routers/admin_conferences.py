@@ -80,23 +80,17 @@ async def admin_create_conference(
         location=data.location,
         is_active=data.is_active if data.is_active is not None else True,
         cover_image_url=data.cover_image_url,
+        organizer=data.organizer,
+        website_url=data.website_url,
     )
     db.add(conference)
     await db.flush()
+    await db.refresh(conference)
 
-    return {
-        "id": conference.id,
-        "title": conference.title,
-        "description": conference.description,
-        "year": conference.year,
-        "start_date": conference.start_date,
-        "end_date": conference.end_date,
-        "location": conference.location,
-        "is_active": conference.is_active,
-        "cover_image_url": conference.cover_image_url,
-        "created_at": conference.created_at,
-        "sessions": [],
-    }
+    result = await db.execute(
+        select(Conference).options(selectinload(Conference.sessions)).where(Conference.id == conference.id)
+    )
+    return result.scalar_one()
 
 
 @router.put("/{conference_id}", response_model=ConferenceRead)
@@ -120,40 +114,10 @@ async def admin_update_conference(
         setattr(conference, field, value)
 
     await db.flush()
-
-    sessions_with_counts = []
-    for session in conference.sessions:
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(ConferencePaper)
-            .where(
-                ConferencePaper.session_id == session.id,
-                ConferencePaper.status == ConferencePaperStatus.published,
-            )
-        )
-        sessions_with_counts.append({
-            "id": session.id,
-            "conference_id": session.conference_id,
-            "title": session.title,
-            "description": session.description,
-            "order": session.order,
-            "created_at": session.created_at,
-            "paper_count": count_result.scalar_one(),
-        })
-
-    return {
-        "id": conference.id,
-        "title": conference.title,
-        "description": conference.description,
-        "year": conference.year,
-        "start_date": conference.start_date,
-        "end_date": conference.end_date,
-        "location": conference.location,
-        "is_active": conference.is_active,
-        "cover_image_url": conference.cover_image_url,
-        "created_at": conference.created_at,
-        "sessions": sessions_with_counts,
-    }
+    result2 = await db.execute(
+        select(Conference).options(selectinload(Conference.sessions)).where(Conference.id == conference_id)
+    )
+    return result2.scalar_one()
 
 
 @router.delete("/{conference_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -194,6 +158,7 @@ async def admin_create_session(
         title=data.title,
         description=data.description,
         order=data.order if data.order is not None else 0,
+        date=data.date,
     )
     db.add(session)
     await db.flush()
@@ -204,6 +169,7 @@ async def admin_create_session(
         "title": session.title,
         "description": session.description,
         "order": session.order,
+        "date": session.date,
         "created_at": session.created_at,
         "paper_count": 0,
     }
@@ -248,6 +214,7 @@ async def admin_update_session(
         "title": session.title,
         "description": session.description,
         "order": session.order,
+        "date": session.date,
         "created_at": session.created_at,
         "paper_count": count_result.scalar_one(),
     }
@@ -292,7 +259,7 @@ async def admin_list_papers(
     query = (
         select(ConferencePaper)
         .options(
-            selectinload(ConferencePaper.authors),
+            selectinload(ConferencePaper.co_authors),
             selectinload(ConferencePaper.session),
         )
         .where(ConferencePaper.conference_id == conference_id)
@@ -369,26 +336,27 @@ async def admin_create_paper(
     db.add(paper)
     await db.flush()
 
-    # Add authors
-    if data.authors:
-        for i, author_data in enumerate(data.authors):
-            author = ConferencePaperAuthor(
+    # Add co-authors
+    if data.co_authors:
+        for i, author_data in enumerate(data.co_authors):
+            co_author = ConferencePaperAuthor(
                 id=uuid.uuid4(),
                 paper_id=paper.id,
-                full_name=author_data.full_name,
-                email=author_data.email,
-                affiliation=author_data.affiliation,
-                orcid=author_data.orcid,
+                user_id=author_data.user_id,
+                guest_name=author_data.guest_name,
+                guest_email=author_data.guest_email,
+                guest_affiliation=author_data.guest_affiliation,
+                guest_orcid=author_data.guest_orcid,
                 order=author_data.order if author_data.order else i + 1,
                 is_corresponding=author_data.is_corresponding,
             )
-            db.add(author)
+            db.add(co_author)
 
     await db.flush()
     result = await db.execute(
         select(ConferencePaper)
         .options(
-            selectinload(ConferencePaper.authors),
+            selectinload(ConferencePaper.co_authors),
             selectinload(ConferencePaper.session),
         )
         .where(ConferencePaper.id == paper.id)
@@ -408,7 +376,7 @@ async def admin_update_paper(
     result = await db.execute(
         select(ConferencePaper)
         .options(
-            selectinload(ConferencePaper.authors),
+            selectinload(ConferencePaper.co_authors),
             selectinload(ConferencePaper.session),
         )
         .where(
@@ -421,6 +389,7 @@ async def admin_update_paper(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
 
     update_data = data.model_dump(exclude_unset=True)
+    co_authors_data = update_data.pop("co_authors", None)
 
     # Auto-set published_date when status changes to published
     if "status" in update_data:
@@ -431,9 +400,34 @@ async def admin_update_paper(
     for field, value in update_data.items():
         setattr(paper, field, value)
 
+    # Replace co-authors if provided
+    if co_authors_data is not None:
+        for existing in list(paper.co_authors):
+            await db.delete(existing)
+        await db.flush()
+        for i, a in enumerate(co_authors_data):
+            db.add(ConferencePaperAuthor(
+                id=uuid.uuid4(),
+                paper_id=paper.id,
+                user_id=a.get("user_id"),
+                guest_name=a.get("guest_name"),
+                guest_email=a.get("guest_email"),
+                guest_affiliation=a.get("guest_affiliation"),
+                guest_orcid=a.get("guest_orcid"),
+                order=a.get("order") or i + 1,
+                is_corresponding=a.get("is_corresponding", False),
+            ))
+
     await db.flush()
-    await db.refresh(paper)
-    return paper
+    result2 = await db.execute(
+        select(ConferencePaper)
+        .options(
+            selectinload(ConferencePaper.co_authors),
+            selectinload(ConferencePaper.session),
+        )
+        .where(ConferencePaper.id == paper.id)
+    )
+    return result2.scalar_one()
 
 
 @router.delete("/{conference_id}/papers/{paper_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -472,7 +466,7 @@ async def admin_update_paper_status(
     result = await db.execute(
         select(ConferencePaper)
         .options(
-            selectinload(ConferencePaper.authors),
+            selectinload(ConferencePaper.co_authors),
             selectinload(ConferencePaper.session),
         )
         .where(

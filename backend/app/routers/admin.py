@@ -318,7 +318,7 @@ async def admin_create_article(
 
     now = datetime.now(timezone.utc)
     submission_date = now if data.status == ArticleStatus.submitted else None
-    published_date = now if data.status == ArticleStatus.published else None
+    published_date = data.published_date or (now if data.status == ArticleStatus.published else None)
 
     article = Article(
         id=uuid.uuid4(),
@@ -334,8 +334,10 @@ async def admin_create_article(
         doi=data.doi,
         pdf_file_path=data.pdf_file_path,
         pdf_file_size=data.pdf_file_size,
+        cover_image_url=data.cover_image_url,
         cover_letter=data.cover_letter,
         article_type=data.article_type,
+        pages=data.pages,
         references=data.references,
         funding=data.funding,
         conflict_of_interest=data.conflict_of_interest,

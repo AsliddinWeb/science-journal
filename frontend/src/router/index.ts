@@ -114,12 +114,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Dashboard' },
       },
       {
-        path: 'submit',
-        name: 'submit-article',
-        component: () => import('@/views/author/SubmitArticleView.vue'),
-        meta: { title: 'Submit Article' },
-      },
-      {
         path: 'articles',
         name: 'my-articles',
         component: () => import('@/views/author/MyArticlesView.vue'),
@@ -237,28 +231,48 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/admin/AdminAnnouncementsView.vue'),
         meta: { title: 'E\'lonlar' },
       },
+      // Conference management — alohida sahifalar
+      {
+        path: 'conf/list',
+        name: 'admin-conf-list',
+        component: () => import('@/views/admin/AdminConfListView.vue'),
+        meta: { title: 'Konferensiyalar' },
+      },
+      {
+        path: 'conf/list/new',
+        name: 'admin-conf-create',
+        component: () => import('@/views/admin/AdminConfEditView.vue'),
+        meta: { title: 'Yangi konferensiya' },
+      },
+      {
+        path: 'conf/list/:id/edit',
+        name: 'admin-conf-edit',
+        component: () => import('@/views/admin/AdminConfEditView.vue'),
+        meta: { title: 'Konferensiyani tahrirlash' },
+      },
+      {
+        path: 'conf/sessions',
+        name: 'admin-conf-sessions',
+        component: () => import('@/views/admin/AdminConfSessionsView.vue'),
+        meta: { title: 'Sonlar' },
+      },
+      // Conference papers (xuddi articles dek)
       {
         path: 'conferences',
         name: 'admin-conferences',
         component: () => import('@/views/admin/AdminConferencesView.vue'),
-        meta: { title: 'Konferensiyalar' },
-      },
-      {
-        path: 'conferences/:id/papers',
-        name: 'admin-conference-papers',
-        component: () => import('@/views/admin/AdminConferencePapersView.vue'),
         meta: { title: 'Konferensiya maqolalari' },
       },
       {
-        path: 'conferences/:id/papers/new',
-        name: 'admin-conference-paper-new',
-        component: () => import('@/views/admin/AdminConferencePaperFormView.vue'),
+        path: 'conferences/new',
+        name: 'admin-conference-new',
+        component: () => import('@/views/admin/AdminConferenceFormView.vue'),
         meta: { title: 'Yangi maqola' },
       },
       {
         path: 'conferences/:id/papers/:paperId/edit',
         name: 'admin-conference-paper-edit',
-        component: () => import('@/views/admin/AdminConferencePaperFormView.vue'),
+        component: () => import('@/views/admin/AdminConferenceFormView.vue'),
         meta: { title: 'Maqolani tahrirlash' },
       },
       {

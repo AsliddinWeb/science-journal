@@ -103,7 +103,10 @@ async def get_conference(
         "location": conference.location,
         "is_active": conference.is_active,
         "cover_image_url": conference.cover_image_url,
+        "organizer": conference.organizer,
+        "website_url": conference.website_url,
         "created_at": conference.created_at,
+        "updated_at": conference.updated_at,
         "sessions": sessions_with_counts,
     }
 
@@ -128,7 +131,7 @@ async def list_conference_papers(
     query = (
         select(ConferencePaper)
         .options(
-            selectinload(ConferencePaper.authors),
+            selectinload(ConferencePaper.co_authors),
             selectinload(ConferencePaper.session),
         )
         .where(
@@ -171,7 +174,7 @@ async def get_conference_paper(
     result = await db.execute(
         select(ConferencePaper)
         .options(
-            selectinload(ConferencePaper.authors),
+            selectinload(ConferencePaper.co_authors),
             selectinload(ConferencePaper.session),
         )
         .where(

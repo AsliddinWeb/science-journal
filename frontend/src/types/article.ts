@@ -46,6 +46,7 @@ export interface Article {
   pdf_file_path?: string
   pdf_file_size?: number
   cover_image_url?: string
+  pages?: string
   article_type?: string
   cover_letter?: string
   references?: string[]

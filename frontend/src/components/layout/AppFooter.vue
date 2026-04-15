@@ -93,7 +93,7 @@ const indexingLogos = [
           </h3>
           <ul class="mt-4 flex flex-col gap-2.5">
             <li v-for="link in [
-              { to: '/author/submit', label: t('footer.submit_article') },
+              { to: '/pages/author-guidelines', label: t('footer.author_guidelines') },
               { to: '/pages/author-guidelines', label: t('footer.author_guidelines') },
               { to: '/pages/review-process', label: t('footer.review_process') },
               { to: '/pages/open-access', label: t('footer.open_access') },

@@ -144,9 +144,6 @@ function canEdit(status: string) {
       <!-- Empty -->
       <div v-else-if="articles.length === 0" class="flex flex-col items-center py-20 text-slate-400">
         <p>{{ t('author.myArticles.empty') }}</p>
-        <router-link :to="{ name: 'submit-article' }" class="btn-primary mt-4">
-          {{ t('author.dashboard.submit_new') }}
-        </router-link>
       </div>
 
       <!-- Table -->
@@ -190,14 +187,6 @@ function canEdit(status: string) {
                       :title="t('common.edit')"
                     >
                       <Eye :size="16" />
-                    </router-link>
-                    <router-link
-                      v-if="canEdit(article.status)"
-                      :to="{ name: 'submit-article', query: { edit: article.id } }"
-                      class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-primary-600 dark:hover:bg-slate-700"
-                      :title="t('common.edit')"
-                    >
-                      <Pencil :size="16" />
                     </router-link>
                     <a
                       v-if="article.status === 'published'"

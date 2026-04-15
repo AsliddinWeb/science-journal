@@ -58,6 +58,7 @@ class ConferenceRead(BaseModel):
     website_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    sessions: List["ConferenceSessionRead"] = []
 
 
 # ─── ConferenceSession ───────────────────────────────────────
@@ -66,7 +67,17 @@ class ConferenceSessionCreate(BaseModel):
     title: dict
     description: Optional[dict] = None
     order: int = 1
-    date: Optional[date] = None
+    date: Any = None
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def parse_date(cls, v: Any) -> Any:
+        if not v or v == "":
+            return None
+        if isinstance(v, str):
+            from datetime import date as _date
+            return _date.fromisoformat(v)
+        return v
 
     @field_validator("title")
     @classmethod
@@ -80,7 +91,17 @@ class ConferenceSessionUpdate(BaseModel):
     title: Optional[dict] = None
     description: Optional[dict] = None
     order: Optional[int] = None
-    date: Optional[date] = None
+    date: Any = None
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def parse_date(cls, v: Any) -> Any:
+        if not v or v == "":
+            return None
+        if isinstance(v, str):
+            from datetime import date as _date
+            return _date.fromisoformat(v)
+        return v
 
 
 class ConferenceSessionRead(BaseModel):
@@ -91,8 +112,9 @@ class ConferenceSessionRead(BaseModel):
     title: dict
     description: Optional[dict] = None
     order: int
-    date: Optional[date] = None
+    date: Any = None
     created_at: datetime
+    paper_count: int = 0
 
 
 # ─── ConferencePaperAuthor ───────────────────────────────────
@@ -173,6 +195,7 @@ class ConferencePaperRead(BaseModel):
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
+    pages: Optional[str] = None
     status: ConferencePaperStatus
     published_date: Optional[datetime] = None
     download_count: int
@@ -197,6 +220,7 @@ class ConferencePaperListItem(BaseModel):
     session_id: Optional[UUID] = None
     doi: Optional[str] = None
     cover_image_url: Optional[str] = None
+    pages: Optional[str] = None
     status: ConferencePaperStatus
     published_date: Optional[datetime] = None
     download_count: int
@@ -213,7 +237,7 @@ class AdminConferencePaperCreate(BaseModel):
     """Admin can create a conference paper on behalf of any user."""
     title: dict
     abstract: dict
-    keywords: List[str] = []
+    keywords: Any = []
     language: ArticleLanguage = ArticleLanguage.uz
     conference_id: UUID
     session_id: Optional[UUID] = None
@@ -221,9 +245,11 @@ class AdminConferencePaperCreate(BaseModel):
     co_authors: List[ConferencePaperAuthorCreate] = []
     status: ConferencePaperStatus = ConferencePaperStatus.draft
     doi: Optional[str] = None
+    published_date: Optional[datetime] = None
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
+    pages: Optional[str] = None
     references: Optional[List[str]] = None
     funding: Optional[str] = None
 
@@ -239,15 +265,22 @@ class AdminConferencePaperUpdate(BaseModel):
     """Admin can update any field of any conference paper."""
     title: Optional[dict] = None
     abstract: Optional[dict] = None
-    keywords: Optional[List[str]] = None
+    keywords: Optional[Any] = None
     language: Optional[ArticleLanguage] = None
     conference_id: Optional[UUID] = None
     session_id: Optional[UUID] = None
     author_id: Optional[UUID] = None
     status: Optional[ConferencePaperStatus] = None
     doi: Optional[str] = None
+    published_date: Optional[datetime] = None
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
+    pages: Optional[str] = None
     references: Optional[List[str]] = None
     funding: Optional[str] = None
+    co_authors: Optional[List[ConferencePaperAuthorCreate]] = None
+
+
+# Resolve forward references
+ConferenceRead.model_rebuild()

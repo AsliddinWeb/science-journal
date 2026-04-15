@@ -65,6 +65,9 @@ class Article(Base):
     pdf_file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
+    # Pages (e.g. "82-86")
+    pages: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
     # Extended fields
     article_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     cover_letter: Mapped[str | None] = mapped_column(Text, nullable=True)
