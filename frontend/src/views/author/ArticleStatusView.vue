@@ -317,10 +317,10 @@ async function submitRevision() {
     <div v-else-if="loading" class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_260px]">
         <div class="space-y-4 animate-pulse">
-          <div class="h-32 rounded-2xl bg-slate-100 dark:bg-slate-800" />
-          <div class="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800" />
+          <div class="skeleton h-32 rounded-2xl" />
+          <div class="skeleton h-20 rounded-2xl" />
         </div>
-        <div class="h-48 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+        <div class="skeleton h-48 rounded-2xl" />
       </div>
     </div>
   </div>

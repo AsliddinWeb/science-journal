@@ -1,9 +1,23 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List, Any
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from app.models.article import ArticleStatus, ArticleLanguage
 from app.schemas.user import UserReadPublic
+
+
+class ArticleVolumeBrief(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    number: int
+    year: int
+
+
+class ArticleIssueBrief(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    number: int
+    published_date: Optional[date] = None
 
 
 class ArticleAuthorCreate(BaseModel):
@@ -48,7 +62,7 @@ class ArticleCreate(BaseModel):
     cover_image_url: Optional[str] = None
     cover_letter: Optional[str] = None
     article_type: Optional[str] = None
-    references: Optional[List[str]] = None
+    references: Optional[Any] = None  # list[str] OR {"uz": [...], "ru": [...], "en": [...]}
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
     acknowledgments: Optional[str] = None
@@ -72,7 +86,7 @@ class ArticleUpdate(BaseModel):
     cover_image_url: Optional[str] = None
     cover_letter: Optional[str] = None
     article_type: Optional[str] = None
-    references: Optional[List[str]] = None
+    references: Optional[Any] = None
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
     acknowledgments: Optional[str] = None
@@ -98,7 +112,7 @@ class AdminArticleCreate(BaseModel):
     cover_letter: Optional[str] = None
     article_type: Optional[str] = None
     pages: Optional[str] = None
-    references: Optional[List[str]] = None
+    references: Optional[Any] = None
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
     acknowledgments: Optional[str] = None
@@ -121,6 +135,7 @@ class AdminArticleUpdate(BaseModel):
     volume_id: Optional[UUID] = None
     issue_id: Optional[UUID] = None
     author_id: Optional[UUID] = None
+    co_authors: Optional[List[ArticleAuthorCreate]] = None
     status: Optional[ArticleStatus] = None
     doi: Optional[str] = None
     published_date: Optional[datetime] = None
@@ -130,7 +145,7 @@ class AdminArticleUpdate(BaseModel):
     cover_letter: Optional[str] = None
     article_type: Optional[str] = None
     pages: Optional[str] = None
-    references: Optional[List[str]] = None
+    references: Optional[Any] = None
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
     acknowledgments: Optional[str] = None
@@ -163,7 +178,7 @@ class ArticleRead(BaseModel):
     id: UUID
     title: dict
     abstract: dict
-    keywords: List[Any]
+    keywords: Any  # list[str] OR {"uz": [...], "ru": [...], "en": [...]}
     doi: Optional[str] = None
     submission_date: Optional[datetime] = None
     published_date: Optional[datetime] = None
@@ -179,7 +194,7 @@ class ArticleRead(BaseModel):
     article_type: Optional[str] = None
     pages: Optional[str] = None
     cover_letter: Optional[str] = None
-    references: Optional[List[Any]] = None
+    references: Optional[Any] = None  # list[str] OR {"uz": [...], "ru": [...], "en": [...]}
     funding: Optional[str] = None
     conflict_of_interest: Optional[str] = None
     acknowledgments: Optional[str] = None
@@ -189,6 +204,8 @@ class ArticleRead(BaseModel):
     updated_at: datetime
     author: Optional[UserReadPublic] = None
     co_authors: List[ArticleAuthorRead] = []
+    volume: Optional[ArticleVolumeBrief] = None
+    issue: Optional[ArticleIssueBrief] = None
 
 
 class ArticleStatusDetail(ArticleRead):
@@ -202,7 +219,7 @@ class ArticleListItem(BaseModel):
     id: UUID
     title: dict
     abstract: dict
-    keywords: List[Any]
+    keywords: Any
     doi: Optional[str] = None
     published_date: Optional[datetime] = None
     submission_date: Optional[datetime] = None
@@ -212,9 +229,13 @@ class ArticleListItem(BaseModel):
     issue_id: Optional[UUID] = None
     category_id: Optional[UUID] = None
     cover_image_url: Optional[str] = None
+    pdf_file_path: Optional[str] = None
+    pages: Optional[str] = None
     download_count: int
     view_count: int
     created_at: datetime
     updated_at: datetime
     author: Optional[UserReadPublic] = None
     co_authors: List[ArticleAuthorRead] = []
+    volume: Optional[ArticleVolumeBrief] = None
+    issue: Optional[ArticleIssueBrief] = None

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Search, UserPlus, Trash2, ToggleLeft, ToggleRight, ChevronDown } from 'lucide-vue-next'
+import { Search, UserPlus, Trash2, ToggleLeft, ToggleRight, ChevronDown, Pencil, X } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { formatDateShort } from '@/utils/formatDate'
 import { useToast } from '@/composables/useToast'
@@ -29,6 +29,61 @@ const changingRoleId = ref<string | null>(null)
 const togglingId = ref<string | null>(null)
 
 const filters = reactive({ search: '', role: '', is_active: '' })
+
+// Edit modal
+const showEditModal = ref(false)
+const editing = ref(false)
+const editForm = reactive({
+  id: '',
+  full_name: '',
+  email: '',
+  affiliation: '',
+  country: '',
+  orcid_id: '',
+  role: 'reader' as string,
+  is_active: true,
+  is_verified: false,
+})
+
+function openEdit(user: User) {
+  editForm.id = user.id
+  editForm.full_name = user.full_name || ''
+  editForm.email = user.email || ''
+  editForm.affiliation = (user as any).affiliation || ''
+  editForm.country = (user as any).country || ''
+  editForm.orcid_id = (user as any).orcid_id || ''
+  editForm.role = (user as any).role || 'reader'
+  editForm.is_active = !!(user as any).is_active
+  editForm.is_verified = !!(user as any).is_verified
+  showEditModal.value = true
+}
+
+async function saveEdit() {
+  if (!editForm.id) return
+  editing.value = true
+  try {
+    const payload = {
+      full_name: editForm.full_name,
+      email: editForm.email,
+      affiliation: editForm.affiliation || null,
+      country: editForm.country || null,
+      orcid_id: editForm.orcid_id || null,
+      role: editForm.role,
+      is_active: editForm.is_active,
+      is_verified: editForm.is_verified,
+    }
+    const updated = await api.patch<User>(`/api/admin/users/${editForm.id}`, payload)
+    const idx = users.value.findIndex((u) => u.id === editForm.id)
+    if (idx !== -1) users.value[idx] = updated
+    toast.success('Saqlandi')
+    showEditModal.value = false
+  } catch (e: any) {
+    const msg = e?.response?.data?.detail || 'Xatolik'
+    toast.error(typeof msg === 'string' ? msg : 'Xatolik')
+  } finally {
+    editing.value = false
+  }
+}
 
 const ALL_ROLES = ['superadmin', 'editor', 'reviewer', 'author', 'reader']
 const roleBadge: Record<string, string> = {
@@ -233,12 +288,22 @@ function getUserInitials(name: string) {
                 </button>
               </td>
               <td class="px-4 py-3">
-                <button
-                  class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
-                  @click="confirmDelete(user.id)"
-                >
-                  <Trash2 :size="14" />
-                </button>
+                <div class="flex items-center gap-1">
+                  <button
+                    class="rounded p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/30"
+                    :title="t('common.edit')"
+                    @click="openEdit(user)"
+                  >
+                    <Pencil :size="14" />
+                  </button>
+                  <button
+                    class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
+                    :title="t('common.delete')"
+                    @click="confirmDelete(user.id)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -282,6 +347,69 @@ function getUserInitials(name: string) {
       @confirm="doDelete"
       @cancel="showDeleteModal = false"
     />
+
+    <!-- Edit user modal -->
+    <Teleport v-if="showEditModal" to="body">
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" @click="showEditModal = false" />
+        <div class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+          <div class="mb-5 flex items-center justify-between">
+            <h3 class="font-serif text-lg font-semibold text-slate-900 dark:text-white">
+              {{ t('common.edit') }} — {{ editForm.full_name }}
+            </h3>
+            <button class="text-slate-400 hover:text-slate-600" @click="showEditModal = false">
+              <X :size="18" />
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="label-base">{{ t('admin.users.col_name') }}</label>
+                <input v-model="editForm.full_name" type="text" class="input-base w-full" />
+              </div>
+              <div>
+                <label class="label-base">{{ t('admin.users.col_email') }}</label>
+                <input v-model="editForm.email" type="email" class="input-base w-full" />
+              </div>
+              <div>
+                <label class="label-base">{{ t('admin.users.col_affiliation') }}</label>
+                <input v-model="editForm.affiliation" type="text" class="input-base w-full" />
+              </div>
+              <div>
+                <label class="label-base">{{ t('admin.users.col_country') || 'Country' }}</label>
+                <input v-model="editForm.country" type="text" class="input-base w-full" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="label-base">ORCID</label>
+                <input v-model="editForm.orcid_id" type="text" class="input-base w-full font-mono" placeholder="0000-0000-0000-0000" />
+              </div>
+              <div>
+                <label class="label-base">{{ t('admin.users.col_role') }}</label>
+                <select v-model="editForm.role" class="input-base w-full">
+                  <option v-for="r in ALL_ROLES" :key="r" :value="r">{{ r }}</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-2 pt-6">
+                <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input v-model="editForm.is_active" type="checkbox" class="rounded" />
+                  {{ t('common.active') }}
+                </label>
+                <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input v-model="editForm.is_verified" type="checkbox" class="rounded" />
+                  Verified
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <AppButton variant="ghost" @click="showEditModal = false">{{ t('common.cancel') }}</AppButton>
+            <AppButton :loading="editing" @click="saveEdit">{{ t('common.save') }}</AppButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <div v-if="roleDropdownId" class="fixed inset-0 z-10" @click="roleDropdownId = null" />
 

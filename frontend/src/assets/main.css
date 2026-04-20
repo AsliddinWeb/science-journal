@@ -3,8 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  /* ─── Default theme (Oxford) — overwritten by site-theme store at boot. ─── */
   :root {
-    --color-primary: 79 70 229;
+    --color-primary-50:  238 244 252;
+    --color-primary-100: 215 227 245;
+    --color-primary-200: 174 199 230;
+    --color-primary-300: 124 161 207;
+    --color-primary-400: 77 121 178;
+    --color-primary-500: 44 88 144;
+    --color-primary-600: 30 67 117;
+    --color-primary-700: 21 51 93;
+    --color-primary-800: 14 39 75;
+    --color-primary-900: 9 28 56;
+    --color-primary-950: 4 15 34;
+
+    --color-journal-50:  248 250 252;
+    --color-journal-100: 241 245 249;
+    --color-journal-200: 226 232 240;
+    --color-journal-300: 203 213 225;
+    --color-journal-400: 148 163 184;
+    --color-journal-500: 100 116 139;
+    --color-journal-600: 71 85 105;
+    --color-journal-700: 51 65 85;
+    --color-journal-800: 30 41 59;
+    --color-journal-900: 15 23 42;
+    --color-journal-950: 2 6 23;
   }
 
   html {
@@ -38,11 +61,11 @@
   }
 
   .card {
-    @apply rounded-xl border border-stone-200 bg-white shadow-sm transition-all duration-150 dark:border-slate-700 dark:bg-slate-800;
+    @apply rounded-xl border border-stone-200 bg-white shadow-sm transition-all duration-200 dark:border-slate-700 dark:bg-slate-800;
   }
 
   .card-hover {
-    @apply hover:-translate-y-0.5 hover:shadow-md;
+    @apply hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:hover:border-primary-600;
   }
 
   .input-base {
@@ -75,5 +98,47 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Loading skeleton — visible in both light and dark. */
+  .skeleton {
+    @apply relative overflow-hidden rounded bg-slate-200 dark:bg-slate-700;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.6s infinite;
+    transform: translateX(-100%);
+  }
+  .dark .skeleton::after {
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(148, 163, 184, 0.25) 50%,
+      transparent 100%
+    );
+  }
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Page transition */
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+  .page-fade-enter-from,
+  .page-fade-leave-to {
+    opacity: 0;
+    transform: translateY(4px);
   }
 }

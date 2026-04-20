@@ -33,7 +33,7 @@ export interface Article {
   id: string
   title: MultilingualField
   abstract: MultilingualField
-  keywords: string[]
+  keywords: string[] | { uz?: string[]; ru?: string[]; en?: string[] }
   doi?: string
   submission_date?: string
   published_date?: string
@@ -49,7 +49,7 @@ export interface Article {
   pages?: string
   article_type?: string
   cover_letter?: string
-  references?: string[]
+  references?: string[] | { uz?: string[]; ru?: string[]; en?: string[] }
   funding?: string
   conflict_of_interest?: string
   acknowledgments?: string
@@ -59,6 +59,8 @@ export interface Article {
   updated_at: string
   author?: UserPublic
   co_authors: ArticleAuthor[]
+  volume?: { id: string; number: number; year: number }
+  issue?: { id: string; number: number; published_date?: string }
 }
 
 export interface ArticleListItem extends Omit<Article, 'reviews'> {}

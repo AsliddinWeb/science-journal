@@ -6,7 +6,7 @@ import { SlidersHorizontal, X, Search as SearchIcon, AlertCircle, RefreshCw, Glo
 import { api } from '@/composables/useApi'
 import type { Article, PaginatedResponse } from '@/types/article'
 import type { Volume } from '@/types/volume'
-import ArticleListItem from '@/components/article/ArticleListItem.vue'
+import ArticleCard from '@/components/article/ArticleCard.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
 import SkeletonText from '@/components/ui/SkeletonText.vue'
 import { useSeoMeta } from '@/composables/useSeoMeta'
@@ -337,7 +337,7 @@ const langOptions = [
 
           <!-- Articles -->
           <div v-else class="flex flex-col gap-4">
-            <ArticleListItem
+            <ArticleCard
               v-for="article in articles"
               :key="article.id"
               :article="article"

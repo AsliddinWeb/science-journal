@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon, AlertCircle, RefreshCw, X } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import type { Article, PaginatedResponse } from '@/types/article'
-import ArticleListItem from '@/components/article/ArticleListItem.vue'
+import ArticleCard from '@/components/article/ArticleCard.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
 import { useSeoMeta } from '@/composables/useSeoMeta'
 
@@ -179,7 +179,7 @@ watch(() => route.query.q, (q) => {
 
       <!-- Results -->
       <div v-else class="flex flex-col gap-4">
-        <ArticleListItem
+        <ArticleCard
           v-for="article in articles"
           :key="article.id"
           :article="article"

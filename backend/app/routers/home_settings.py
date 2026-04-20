@@ -18,6 +18,9 @@ class HomeSettingsRead(BaseModel):
     hero_title: dict
     hero_subtitle: dict
     hero_issn: Optional[str] = None
+    hero_video_url: Optional[str] = None
+    hero_video_poster_url: Optional[str] = None
+    hero_video_active: bool = False
     about_title: dict
     about_text: dict
     about_image_url: Optional[str] = None
@@ -30,6 +33,7 @@ class HomeSettingsRead(BaseModel):
     announcement_active: bool = False
     cta_title: dict
     cta_subtitle: dict
+    theme: str = "indigo"
     updated_at: datetime
 
 
@@ -37,6 +41,9 @@ class HomeSettingsUpdate(BaseModel):
     hero_title: Optional[dict] = None
     hero_subtitle: Optional[dict] = None
     hero_issn: Optional[str] = None
+    hero_video_url: Optional[str] = None
+    hero_video_poster_url: Optional[str] = None
+    hero_video_active: Optional[bool] = None
     about_title: Optional[dict] = None
     about_text: Optional[dict] = None
     about_image_url: Optional[str] = None
@@ -49,6 +56,7 @@ class HomeSettingsUpdate(BaseModel):
     announcement_active: Optional[bool] = None
     cta_title: Optional[dict] = None
     cta_subtitle: Optional[dict] = None
+    theme: Optional[str] = None
 
 
 @router.get("", response_model=HomeSettingsRead)

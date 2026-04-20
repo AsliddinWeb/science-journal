@@ -31,7 +31,11 @@ const showSidebars = computed(() => !fullWidthRoutes.includes(route.name as stri
               </div>
               <!-- Main content -->
               <div class="min-w-0">
-                <RouterView />
+                <RouterView v-slot="{ Component, route }">
+                  <Transition name="page-fade" mode="out-in">
+                    <component :is="Component" :key="route.fullPath" />
+                  </Transition>
+                </RouterView>
               </div>
               <!-- Right sidebar -->
               <div class="hidden lg:block">
@@ -41,7 +45,11 @@ const showSidebars = computed(() => !fullWidthRoutes.includes(route.name as stri
           </div>
         </template>
         <template v-else>
-          <RouterView />
+          <RouterView v-slot="{ Component, route }">
+            <Transition name="page-fade" mode="out-in">
+              <component :is="Component" :key="route.fullPath" />
+            </Transition>
+          </RouterView>
         </template>
       </main>
       <AppFooter />

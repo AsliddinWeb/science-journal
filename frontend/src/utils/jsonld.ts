@@ -1,4 +1,5 @@
 import type { Article } from '@/types/article'
+import { normalizeKeywords } from '@/utils/truncate'
 
 const SITE_URL = 'https://scientists.uz'
 const PUBLISHER = {
@@ -11,12 +12,16 @@ const PUBLISHER = {
   },
 }
 
+function isUploaderRole(role?: string): boolean {
+  return role === 'superadmin'
+}
+
 export function buildScholarlyArticle(article: Article): object {
   const titleEn = (article.title as any)?.en || (article.title as any)?.uz || ''
   const abstractEn = (article.abstract as any)?.en || (article.abstract as any)?.uz || ''
 
   const authors = []
-  if (article.author) {
+  if (article.author && !isUploaderRole(article.author.role)) {
     authors.push({
       '@type': 'Person',
       name: article.author.full_name,
@@ -26,12 +31,25 @@ export function buildScholarlyArticle(article: Article): object {
   }
   if (article.co_authors) {
     article.co_authors.forEach((ca: any) => {
+      const name = ca.user ? ca.user.full_name : ca.guest_name
+      if (!name) return
+      const orcid = ca.user?.orcid_id || ca.guest_orcid
+      const affiliation = ca.user?.affiliation || ca.guest_affiliation
       authors.push({
         '@type': 'Person',
-        name: ca.user ? ca.user.full_name : ca.guest_name,
-        ...(ca.user?.orcid_id ? { identifier: `https://orcid.org/${ca.user.orcid_id}` } : {}),
+        name,
+        ...(orcid ? { identifier: `https://orcid.org/${orcid}` } : {}),
+        ...(affiliation ? { affiliation: { '@type': 'Organization', name: affiliation } } : {}),
       })
     })
+  }
+
+  // Parse pages "82-86" -> pageStart / pageEnd
+  let pageStart: string | undefined
+  let pageEnd: string | undefined
+  if (article.pages) {
+    const m = article.pages.match(/^\s*(\d+)\s*[-–—]\s*(\d+)\s*$/)
+    if (m) { pageStart = m[1]; pageEnd = m[2] }
   }
 
   return {
@@ -51,11 +69,27 @@ export function buildScholarlyArticle(article: Article): object {
     isAccessibleForFree: true,
     license: 'https://creativecommons.org/licenses/by/4.0/',
     isPartOf: {
-      '@type': 'Periodical',
-      name: 'Science and Innovation',
-      issn: '2181-3337',
+      '@type': article.issue ? 'PublicationIssue' : 'Periodical',
+      ...(article.issue ? { issueNumber: article.issue.number } : {}),
+      ...(article.volume ? {
+        isPartOf: {
+          '@type': 'PublicationVolume',
+          volumeNumber: article.volume.number,
+          isPartOf: {
+            '@type': 'Periodical',
+            name: 'Science and Innovation',
+            issn: '2181-3337',
+          },
+        },
+      } : {
+        name: 'Science and Innovation',
+        issn: '2181-3337',
+      }),
     },
-    keywords: Array.isArray(article.keywords) ? article.keywords.join(', ') : '',
+    ...(pageStart ? { pageStart } : {}),
+    ...(pageEnd ? { pageEnd } : {}),
+    ...(article.pages && !pageStart ? { pagination: article.pages } : {}),
+    keywords: normalizeKeywords(article.keywords).join(', '),
     url: `${SITE_URL}/articles/${article.id}`,
     mainEntityOfPage: {
       '@type': 'WebPage',

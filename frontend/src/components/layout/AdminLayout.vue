@@ -2,7 +2,7 @@
 import AppSidebar from './AppSidebar.vue'
 import LangSwitcher from '@/components/ui/LangSwitcher.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
-import { Menu, Bell, ChevronDown, LogOut, User } from 'lucide-vue-next'
+import { Menu, Bell, ChevronDown, LogOut, User, ExternalLink } from 'lucide-vue-next'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -80,6 +80,18 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
         </h1>
 
         <div class="flex-1" />
+
+        <!-- View site -->
+        <RouterLink
+          to="/"
+          target="_blank"
+          rel="noopener"
+          class="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:inline-flex"
+          :title="t('admin.view_site')"
+        >
+          <ExternalLink :size="13" />
+          {{ t('admin.view_site') }}
+        </RouterLink>
 
         <!-- Theme toggle -->
         <ThemeToggle variant="admin" />

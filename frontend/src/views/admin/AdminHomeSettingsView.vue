@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Check, Loader2, Image, X } from 'lucide-vue-next'
+import { Check, Loader2, Image, X, Palette, Film, Upload } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppSpinner from '@/components/ui/AppSpinner.vue'
+import { THEMES, DEFAULT_THEME_ID } from '@/theme/themes'
+import { useSiteThemeStore } from '@/stores/siteTheme'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -15,10 +17,18 @@ const saving = ref(false)
 const uploading = ref(false)
 const langTab = ref<'uz' | 'ru' | 'en'>('uz')
 
+const siteTheme = useSiteThemeStore()
+
+const uploadingVideo = ref(false)
+const uploadingPoster = ref(false)
+
 const form = ref({
   hero_title: { uz: '', ru: '', en: '' },
   hero_subtitle: { uz: '', ru: '', en: '' },
   hero_issn: '',
+  hero_video_url: '',
+  hero_video_poster_url: '',
+  hero_video_active: false,
   about_title: { uz: '', ru: '', en: '' },
   about_text: { uz: '', ru: '', en: '' },
   about_image_url: '',
@@ -31,7 +41,18 @@ const form = ref({
   announcement_active: false,
   cta_title: { uz: '', ru: '', en: '' },
   cta_subtitle: { uz: '', ru: '', en: '' },
+  theme: DEFAULT_THEME_ID,
 })
+
+function pickTheme(id: string) {
+  form.value.theme = id
+  // Live preview — also apply to current page
+  siteTheme.set(id)
+}
+
+function swatchStyle(rgb: string): Record<string, string> {
+  return { backgroundColor: `rgb(${rgb})` }
+}
 
 onMounted(async () => {
   try {
@@ -40,6 +61,9 @@ onMounted(async () => {
       hero_title: data.hero_title || { uz: '', ru: '', en: '' },
       hero_subtitle: data.hero_subtitle || { uz: '', ru: '', en: '' },
       hero_issn: data.hero_issn || '',
+      hero_video_url: data.hero_video_url || '',
+      hero_video_poster_url: data.hero_video_poster_url || '',
+      hero_video_active: !!data.hero_video_active,
       about_title: data.about_title || { uz: '', ru: '', en: '' },
       about_text: data.about_text || { uz: '', ru: '', en: '' },
       about_image_url: data.about_image_url || '',
@@ -52,6 +76,7 @@ onMounted(async () => {
       announcement_active: data.announcement_active || false,
       cta_title: data.cta_title || { uz: '', ru: '', en: '' },
       cta_subtitle: data.cta_subtitle || { uz: '', ru: '', en: '' },
+      theme: (THEMES.find(t => t.id === data.theme)?.id) || DEFAULT_THEME_ID,
     }
   } catch {}
   finally { loading.value = false }
@@ -64,6 +89,10 @@ async function save() {
       ...form.value,
       about_image_url: form.value.about_image_url || null,
     })
+    // Once saved, make the chosen theme the site-wide default — clear any
+    // previous localStorage override so other clients pick up the new default.
+    try { localStorage.removeItem('site-theme') } catch { /* ignore */ }
+    siteTheme.set(form.value.theme)
     toast.success('Saqlandi')
   } catch { toast.error('Xatolik') }
   finally { saving.value = false }
@@ -81,6 +110,38 @@ async function uploadImage(e: Event) {
   } catch { toast.error('Rasm yuklanmadi') }
   finally { uploading.value = false }
 }
+
+async function uploadHeroVideo(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  uploadingVideo.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await api.post<{ s3_key: string }>('/api/upload/video', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    form.value.hero_video_url = res.s3_key
+    form.value.hero_video_active = true
+    toast.success('Video yuklandi')
+  } catch (err: any) {
+    const msg = err?.response?.data?.detail
+    toast.error(typeof msg === 'string' ? msg : 'Video yuklanmadi')
+  } finally {
+    uploadingVideo.value = false
+  }
+}
+
+async function uploadHeroPoster(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  uploadingPoster.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await api.post<{ s3_key: string }>('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    form.value.hero_video_poster_url = res.s3_key
+  } catch { toast.error('Poster yuklanmadi') }
+  finally { uploadingPoster.value = false }
+}
 </script>
 
 <template>
@@ -93,6 +154,49 @@ async function uploadImage(e: Event) {
     <div v-if="loading" class="flex justify-center py-24"><AppSpinner :size="36" class="text-primary-500" /></div>
 
     <div v-else class="space-y-6">
+      <!-- ══ Theme picker ══ -->
+      <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-4 flex items-center gap-2">
+          <Palette :size="18" class="text-primary-600 dark:text-primary-400" />
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Sayt rang mavzusi</h2>
+          <span class="ml-auto text-xs text-slate-400">Tanlangan: <strong class="text-slate-700 dark:text-slate-200">{{ form.theme }}</strong></span>
+        </div>
+        <p class="mb-4 text-xs text-slate-500 dark:text-slate-400">
+          Admin tanlagan mavzu barcha foydalanuvchilar uchun standart sifatida qo'llaniladi. Quyidagi variantlardan birini tanlang — chap paneldagi ranglar darhol yangilanadi.
+        </p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+          <button
+            v-for="theme in THEMES"
+            :key="theme.id"
+            type="button"
+            class="group relative flex flex-col gap-2 rounded-xl border bg-white p-3 text-left transition hover:shadow-md dark:bg-slate-800"
+            :class="form.theme === theme.id
+              ? 'border-primary-500 ring-2 ring-primary-500/40'
+              : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'"
+            @click="pickTheme(theme.id)"
+          >
+            <!-- Swatches -->
+            <div class="flex h-8 overflow-hidden rounded-md">
+              <span class="flex-1" :style="swatchStyle(theme.primary['300'])" />
+              <span class="flex-1" :style="swatchStyle(theme.primary['500'])" />
+              <span class="flex-1" :style="swatchStyle(theme.primary['700'])" />
+              <span class="flex-1" :style="swatchStyle(theme.journal['800'])" />
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ theme.label }}</p>
+              <p v-if="theme.description" class="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                {{ theme.description }}
+              </p>
+            </div>
+            <Check
+              v-if="form.theme === theme.id"
+              :size="16"
+              class="absolute right-2 top-2 rounded-full bg-primary-500 p-0.5 text-white shadow"
+            />
+          </button>
+        </div>
+      </section>
+
       <!-- Lang tabs -->
       <div class="sticky top-16 z-10 flex gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <button v-for="l in (['uz', 'ru', 'en'] as const)" :key="l" class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition" :class="langTab === l ? 'bg-primary-600 text-white shadow' : 'text-slate-500 hover:text-slate-700'" @click="langTab = l">{{ l.toUpperCase() }}</button>
@@ -113,6 +217,74 @@ async function uploadImage(e: Event) {
           <div>
             <label class="label-base">ISSN badge</label>
             <input v-model="form.hero_issn" class="input-base w-64" placeholder="ISSN: 2181-0842" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ Hero Video / Announcement ══ -->
+      <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-4 flex items-center gap-2">
+          <Film :size="18" class="text-primary-600 dark:text-primary-400" />
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Hero video / E'lon</h2>
+          <label class="ml-auto flex cursor-pointer items-center gap-2 text-sm">
+            <input v-model="form.hero_video_active" type="checkbox" class="h-4 w-4 rounded accent-primary-600" />
+            <span class="text-slate-700 dark:text-slate-300">{{ t('common.active') }}</span>
+          </label>
+        </div>
+        <p class="mb-4 text-xs text-slate-500 dark:text-slate-400">
+          Bosh sahifa hero qismida ixtiyoriy video ko'rsating. YouTube/Vimeo havolasini yoki fayl yuklang (MP4/WebM, 200 MB gacha).
+        </p>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <!-- URL + file upload -->
+          <div class="space-y-2">
+            <label class="label-base">Video URL yoki yuklangan fayl</label>
+            <input
+              v-model="form.hero_video_url"
+              class="input-base w-full font-mono text-xs"
+              placeholder="https://youtu.be/… yoki videos/uuid.mp4"
+            />
+            <div class="flex items-center gap-2">
+              <label class="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-slate-300 px-3 py-2 text-sm hover:border-primary-400 dark:border-slate-600">
+                <Loader2 v-if="uploadingVideo" :size="16" class="animate-spin text-primary-500" />
+                <Upload v-else :size="16" class="text-slate-400" />
+                <span class="text-slate-500">{{ uploadingVideo ? 'Yuklanmoqda...' : 'Video yuklash (MP4/WebM)' }}</span>
+                <input type="file" accept="video/mp4,video/webm,video/ogg,video/quicktime" class="hidden" @change="uploadHeroVideo" />
+              </label>
+              <button
+                v-if="form.hero_video_url"
+                class="rounded-lg border border-slate-200 p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:border-slate-600 dark:hover:bg-red-900/30"
+                type="button"
+                :title="t('common.delete')"
+                @click="form.hero_video_url = ''"
+              >
+                <X :size="14" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Poster -->
+          <div class="space-y-2">
+            <label class="label-base">Video poster (ixtiyoriy — faqat MP4 uchun)</label>
+            <div v-if="form.hero_video_poster_url" class="relative inline-block">
+              <img
+                :src="form.hero_video_poster_url.startsWith('http') || form.hero_video_poster_url.startsWith('/') ? form.hero_video_poster_url : `/api/uploads/${form.hero_video_poster_url}`"
+                class="h-24 rounded-lg object-cover"
+              />
+              <button
+                type="button"
+                class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow hover:bg-red-600"
+                @click="form.hero_video_poster_url = ''"
+              >
+                <X :size="12" />
+              </button>
+            </div>
+            <label class="flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-slate-300 px-3 py-2 text-sm hover:border-primary-400 dark:border-slate-600">
+              <Loader2 v-if="uploadingPoster" :size="16" class="animate-spin text-primary-500" />
+              <Image v-else :size="16" class="text-slate-400" />
+              <span class="text-slate-500">{{ uploadingPoster ? 'Yuklanmoqda...' : 'Poster yuklash (JPEG/PNG)' }}</span>
+              <input type="file" accept="image/*" class="hidden" @change="uploadHeroPoster" />
+            </label>
           </div>
         </div>
       </section>

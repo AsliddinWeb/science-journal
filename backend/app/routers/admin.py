@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.article import Article, ArticleStatus, ArticleAuthor
 from app.models.user import User, UserRole
 from app.schemas.article import ArticleRead, ArticleStatusUpdate, AdminArticleCreate, AdminArticleUpdate
-from app.schemas.user import UserRead
+from app.schemas.user import UserRead, AdminUserUpdate
 from app.schemas.common import PaginatedResponse
 from app.dependencies import require_admin, require_editor
 from app.utils.pagination import PaginationParams, paginate_response
@@ -222,6 +222,8 @@ async def admin_list_articles(
     query = select(Article).options(
         selectinload(Article.author),
         selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
+        selectinload(Article.volume),
+        selectinload(Article.issue),
     )
 
     if status_filter:
@@ -368,6 +370,8 @@ async def admin_create_article(
         .options(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
+            selectinload(Article.volume),
+            selectinload(Article.issue),
         )
         .where(Article.id == article.id)
     )
@@ -389,6 +393,8 @@ async def admin_update_article(
         .options(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
+            selectinload(Article.volume),
+            selectinload(Article.issue),
         )
         .where(Article.id == article_id)
     )
@@ -406,12 +412,43 @@ async def admin_update_article(
         if new_status == ArticleStatus.submitted and not article.submission_date:
             article.submission_date = datetime.now(timezone.utc)
 
+    # Replace co_authors if provided (delete old, add new)
+    co_authors_payload = update_data.pop("co_authors", None)
+
     for field, value in update_data.items():
         setattr(article, field, value)
 
+    if co_authors_payload is not None:
+        for existing in list(article.co_authors):
+            await db.delete(existing)
+        await db.flush()
+        for i, ca in enumerate(co_authors_payload):
+            db.add(ArticleAuthor(
+                id=uuid.uuid4(),
+                article_id=article.id,
+                user_id=ca.get("user_id"),
+                guest_name=ca.get("guest_name"),
+                guest_email=ca.get("guest_email"),
+                guest_affiliation=ca.get("guest_affiliation"),
+                guest_orcid=ca.get("guest_orcid"),
+                order=ca.get("order") or (i + 1),
+                is_corresponding=bool(ca.get("is_corresponding")),
+            ))
+
     await db.flush()
-    await db.refresh(article)
-    return article
+
+    # Re-fetch so co_authors + relations reflect the new state
+    reload = await db.execute(
+        select(Article)
+        .options(
+            selectinload(Article.author),
+            selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
+            selectinload(Article.volume),
+            selectinload(Article.issue),
+        )
+        .where(Article.id == article_id)
+    )
+    return reload.scalar_one()
 
 
 @router.patch("/articles/{article_id}/status", response_model=ArticleRead)
@@ -427,6 +464,8 @@ async def update_article_status(
         .options(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
+            selectinload(Article.volume),
+            selectinload(Article.issue),
         )
         .where(Article.id == article_id)
     )
@@ -511,7 +550,12 @@ async def assign_doi(
     """Assign a DOI to a published article."""
     result = await db.execute(
         select(Article)
-        .options(selectinload(Article.author), selectinload(Article.co_authors))
+        .options(
+            selectinload(Article.author),
+            selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
+            selectinload(Article.volume),
+            selectinload(Article.issue),
+        )
         .where(Article.id == article_id)
     )
     article = result.scalar_one_or_none()
@@ -564,6 +608,36 @@ async def admin_list_users(
     users = result.scalars().all()
 
     return paginate_response(users, total, params.page, params.limit)
+
+
+@router.patch("/users/{user_id}", response_model=UserRead)
+async def admin_update_user(
+    user_id: uuid.UUID,
+    data: AdminUserUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: object = Depends(require_admin),
+) -> User:
+    """Admin: update any profile field of any user."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    # Guard unique email
+    new_email = update_data.get("email")
+    if new_email and new_email != user.email:
+        existing = await db.execute(select(User).where(User.email == new_email, User.id != user_id))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    await db.flush()
+    await db.refresh(user)
+    return user
 
 
 @router.patch("/users/{user_id}/role")

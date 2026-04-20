@@ -40,6 +40,26 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
 
 
+class AdminUserUpdate(BaseModel):
+    """Admin: edit any profile field of any user."""
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    affiliation: Optional[str] = None
+    country: Optional[str] = None
+    orcid_id: Optional[str] = None
+    avatar_url: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
+
+    @field_validator("orcid_id")
+    @classmethod
+    def validate_orcid(cls, v: Optional[str]) -> Optional[str]:
+        if v and not re.match(r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$", v):
+            raise ValueError("Invalid ORCID format. Expected: 0000-0000-0000-0000")
+        return v
+
+
 class UserProfileUpdate(BaseModel):
     """Profile update from author portal — subset of editable fields."""
     full_name: Optional[str] = None

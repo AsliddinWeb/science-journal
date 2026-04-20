@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowRight, FileText, Target, BarChart3, Send, ClipboardList, ShieldCheck, Unlock, DollarSign, Download } from 'lucide-vue-next'
+import { ArrowRight, Target, BarChart3, Send, ClipboardList, ShieldCheck, Unlock, DollarSign, Download } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useLocaleStore } from '@/stores/locale'
 import type { PaginatedResponse, Article } from '@/types/article'
 import type { Volume } from '@/types/volume'
 import { useSeoMeta } from '@/composables/useSeoMeta'
+import ArticleCard from '@/components/article/ArticleCard.vue'
 
 const { t } = useI18n()
 const localeStore = useLocaleStore()
@@ -19,6 +20,9 @@ useSeoMeta({
 interface HomeSettingsData {
   hero_title: Record<string, string>
   hero_subtitle: Record<string, string>
+  hero_video_url: string | null
+  hero_video_poster_url: string | null
+  hero_video_active: boolean
   about_title: Record<string, string>
   about_text: Record<string, string>
   cta_title: Record<string, string>
@@ -27,6 +31,31 @@ interface HomeSettingsData {
   announcement_ru: string | null
   announcement_en: string | null
   announcement_active: boolean
+}
+
+type HeroVideo =
+  | { kind: 'youtube'; embedUrl: string }
+  | { kind: 'vimeo'; embedUrl: string }
+  | { kind: 'file'; src: string; poster?: string }
+  | null
+
+function parseHeroVideo(url: string | null | undefined, poster: string | null | undefined): HeroVideo {
+  if (!url) return null
+  const raw = url.trim()
+  // YouTube
+  const yt = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{6,})/)
+  if (yt) return { kind: 'youtube', embedUrl: `https://www.youtube.com/embed/${yt[1]}` }
+  // Vimeo
+  const vm = raw.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+  if (vm) return { kind: 'vimeo', embedUrl: `https://player.vimeo.com/video/${vm[1]}` }
+  // Local upload or external MP4
+  const src = raw.startsWith('http') || raw.startsWith('/')
+    ? raw
+    : `/api/uploads/${raw}`
+  const p = poster && !poster.startsWith('http') && !poster.startsWith('/')
+    ? `/api/uploads/${poster}`
+    : (poster || undefined)
+  return { kind: 'file', src, poster: p || undefined }
 }
 
 const lang = computed(() => localeStore.current)
@@ -43,6 +72,9 @@ const aboutTitle = computed(() => hs.value?.about_title?.[lang.value] || hs.valu
 const aboutText = computed(() => hs.value?.about_text?.[lang.value] || hs.value?.about_text?.uz || '')
 const ctaTitle = computed(() => hs.value?.cta_title?.[lang.value] || hs.value?.cta_title?.uz || t('home.submit_cta_title'))
 const ctaSubtitle = computed(() => hs.value?.cta_subtitle?.[lang.value] || hs.value?.cta_subtitle?.uz || t('home.submit_cta_desc'))
+const heroVideo = computed<HeroVideo>(() =>
+  hs.value?.hero_video_active ? parseHeroVideo(hs.value.hero_video_url, hs.value.hero_video_poster_url) : null
+)
 
 const articleTitle = (a: Article) => {
   const map = a.title as Record<string, string>
@@ -80,8 +112,37 @@ const statItems = computed(() => [
 
 <template>
   <div class="space-y-6">
-    <!-- Banner Hero -->
-    <section class="relative overflow-hidden rounded-2xl border border-journal-700 bg-gradient-to-r from-journal-800 via-journal-700 to-journal-900 shadow-lg">
+    <!-- Banner Hero — VIDEO mode: full-width video fills the container -->
+    <section
+      v-if="heroVideo"
+      class="relative overflow-hidden rounded-2xl border border-journal-700 bg-black shadow-lg"
+    >
+      <div class="relative aspect-video w-full">
+        <iframe
+          v-if="heroVideo.kind === 'youtube' || heroVideo.kind === 'vimeo'"
+          :src="heroVideo.embedUrl"
+          class="absolute inset-0 h-full w-full"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          loading="lazy"
+        />
+        <video
+          v-else
+          :src="heroVideo.src"
+          :poster="heroVideo.poster"
+          class="absolute inset-0 h-full w-full object-cover"
+          controls
+          preload="metadata"
+        />
+      </div>
+    </section>
+
+    <!-- Banner Hero — DEFAULT mode: text + stats inside gradient panel -->
+    <section
+      v-else
+      class="relative overflow-hidden rounded-2xl border border-journal-700 bg-gradient-to-r from-journal-800 via-journal-700 to-journal-900 shadow-lg"
+    >
       <div class="absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 28px 28px;" />
       <div class="absolute -right-10 top-0 h-full w-2/3">
         <svg viewBox="0 0 400 300" class="h-full w-full opacity-20">
@@ -113,6 +174,36 @@ const statItems = computed(() => [
 
         <!-- Stats bar -->
         <div class="relative mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm sm:grid-cols-4">
+          <div
+            v-for="stat in statItems"
+            :key="stat.label"
+            class="bg-journal-800/40 p-4 text-center"
+          >
+            <div class="font-serif text-2xl font-bold text-primary-200">{{ stat.value.toLocaleString() }}</div>
+            <div class="mt-1 text-[11px] uppercase tracking-wider text-slate-400">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Info panel below video — shown only when video hero is active -->
+    <section
+      v-if="heroVideo"
+      class="relative overflow-hidden rounded-2xl border border-journal-700 bg-gradient-to-r from-journal-800 via-journal-700 to-journal-900 p-8 shadow-lg sm:p-10"
+    >
+      <div class="absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 28px 28px;" />
+      <div class="relative">
+        <div class="max-w-2xl">
+          <span class="inline-block rounded-full border border-primary-400/40 bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-300">
+            {{ t('home.hero_badge') }}
+          </span>
+          <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
+            {{ heroTitle }}
+          </h1>
+          <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm sm:grid-cols-4">
           <div
             v-for="stat in statItems"
             :key="stat.label"
@@ -220,7 +311,7 @@ const statItems = computed(() => [
       </h2>
 
       <div v-if="loading" class="space-y-4">
-        <div v-for="i in 3" :key="i" class="h-32 animate-pulse rounded-xl bg-stone-100 dark:bg-slate-800" />
+        <div v-for="i in 3" :key="i" class="skeleton h-32 rounded-xl" />
       </div>
 
       <div v-else-if="!latestArticles.length" class="rounded-xl border border-stone-200 bg-white p-8 text-center text-slate-400 dark:border-slate-700 dark:bg-slate-800">
@@ -228,39 +319,11 @@ const statItems = computed(() => [
       </div>
 
       <div v-else class="space-y-4">
-        <div
+        <ArticleCard
           v-for="article in latestArticles"
           :key="article.id"
-          class="group rounded-xl border border-stone-200 bg-white p-5 transition hover:border-primary-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
-        >
-          <RouterLink :to="`/articles/${article.id}`" class="block">
-            <h3 class="font-serif text-base font-bold text-journal-800 transition group-hover:text-primary-700 dark:text-slate-200 dark:group-hover:text-primary-400">
-              {{ articleTitle(article) }}
-            </h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              {{ articleAuthors(article) }}
-            </p>
-          </RouterLink>
-          <div v-if="article.doi" class="mt-3 flex items-center gap-2 text-xs text-primary-700 dark:text-primary-400">
-            <span class="h-4 w-4 rounded-full bg-primary-500 flex-shrink-0" />
-            <a :href="`https://doi.org/${article.doi}`" target="_blank" rel="noopener" class="hover:underline font-mono">
-              https://doi.org/{{ article.doi }}
-            </a>
-          </div>
-          <div class="mt-3 flex items-center gap-2">
-            <RouterLink
-              v-if="article.pdf_file_path"
-              :to="`/articles/${article.id}`"
-              class="inline-flex items-center gap-1.5 rounded-md bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 transition hover:bg-primary-200 dark:bg-primary-950 dark:text-primary-300"
-            >
-              <FileText :size="12" />
-              Full text (PDF)
-            </RouterLink>
-            <span v-if="article.published_date" class="ml-auto text-xs text-slate-400">
-              {{ new Date(article.published_date).getFullYear() }}
-            </span>
-          </div>
-        </div>
+          :article="article"
+        />
       </div>
 
       <div class="mt-6 text-center">

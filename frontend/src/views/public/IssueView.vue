@@ -7,7 +7,7 @@ import { api } from '@/composables/useApi'
 import type { Article, PaginatedResponse } from '@/types/article'
 import type { Issue, Volume } from '@/types/volume'
 import { formatDate } from '@/utils/formatDate'
-import ArticleListItem from '@/components/article/ArticleListItem.vue'
+import ArticleCard from '@/components/article/ArticleCard.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
 import { useSeoMeta } from '@/composables/useSeoMeta'
 
@@ -154,12 +154,10 @@ function onPageChange(p: number) {
 
         <!-- List -->
         <div v-else class="flex flex-col gap-4">
-          <ArticleListItem
+          <ArticleCard
             v-for="article in articles"
             :key="article.id"
             :article="article"
-            :volume-number="volume?.number"
-            :issue-number="issue?.number"
           />
         </div>
 

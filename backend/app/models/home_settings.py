@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, DateTime, func
+from sqlalchemy import String, Text, Boolean, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
@@ -17,6 +17,11 @@ class HomeSettings(Base):
     hero_title: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     hero_subtitle: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     hero_issn: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    # Hero optional video embed
+    hero_video_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    hero_video_poster_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    hero_video_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # About section (inside hero)
     about_title: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
@@ -37,6 +42,9 @@ class HomeSettings(Base):
     # CTA section
     cta_title: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     cta_subtitle: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+
+    # Site theme (palette id — see frontend/src/theme/themes.ts)
+    theme: Mapped[str] = mapped_column(String(50), nullable=False, default="indigo")
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
