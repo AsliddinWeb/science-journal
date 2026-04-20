@@ -17,8 +17,11 @@ services:
 
   nginx:
     restart: unless-stopped
+    # Bound to loopback only — host nginx reverse-proxies to this port.
+    # Port chosen to avoid collisions with other projects on shared hosts.
+    # Override with: NGINX_HOST_PORT=<port> docker compose up …
     ports:
-      - "127.0.0.1:8088:80"
+      - "127.0.0.1:${NGINX_HOST_PORT:-18801}:80"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
       - uploads_data:/var/www/uploads:ro
