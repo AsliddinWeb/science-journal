@@ -45,7 +45,7 @@ def _url_entry(loc: str, lastmod: str | None = None, changefreq: str = "monthly"
     return "\n".join(lines)
 
 
-@router.get("/sitemap.xml", include_in_schema=False)
+@router.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
 async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
     cached = await get_cached("sitemap")
     if cached:
@@ -83,7 +83,7 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
         return Response(content='<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', media_type="application/xml")
 
 
-@router.get("/robots.txt", include_in_schema=False)
+@router.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
 async def robots() -> PlainTextResponse:
     content = f"""User-agent: *
 Allow: /
