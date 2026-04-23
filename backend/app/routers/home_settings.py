@@ -24,6 +24,16 @@ class HomeSettingsRead(BaseModel):
     site_logo_url: Optional[str] = None
     site_name: dict = {}
     site_tagline: dict = {}
+    footer_description: dict = {}
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_address: Optional[str] = None
+    social_telegram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_youtube: Optional[str] = None
+    social_linkedin: Optional[str] = None
+    social_twitter: Optional[str] = None
     about_title: dict
     about_text: dict
     about_image_url: Optional[str] = None
@@ -50,6 +60,16 @@ class HomeSettingsUpdate(BaseModel):
     site_logo_url: Optional[str] = None
     site_name: Optional[dict] = None
     site_tagline: Optional[dict] = None
+    footer_description: Optional[dict] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_address: Optional[str] = None
+    social_telegram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_youtube: Optional[str] = None
+    social_linkedin: Optional[str] = None
+    social_twitter: Optional[str] = None
     about_title: Optional[dict] = None
     about_text: Optional[dict] = None
     about_image_url: Optional[str] = None

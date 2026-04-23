@@ -9,7 +9,20 @@ export interface SiteInfoData {
   site_logo_url?: string | null
   issn_online?: string | null
   issn_print?: string | null
-  // Legacy fallback — some places still use hero_title as the display name
+  license_type?: string | null
+
+  footer_description?: Record<string, string>
+  contact_email?: string | null
+  contact_phone?: string | null
+  contact_address?: string | null
+  social_telegram?: string | null
+  social_facebook?: string | null
+  social_instagram?: string | null
+  social_youtube?: string | null
+  social_linkedin?: string | null
+  social_twitter?: string | null
+
+  // Legacy fallback
   hero_title?: Record<string, string>
 }
 
@@ -26,7 +39,7 @@ const DEFAULT_TAGLINE = {
 }
 
 /**
- * Single source of truth for site branding (name, logo, tagline).
+ * Single source of truth for site branding, footer content and contact info.
  * Loaded once from /api/home-settings; all components read from here.
  */
 export const useSiteInfoStore = defineStore('siteInfo', () => {
@@ -52,7 +65,7 @@ export const useSiteInfoStore = defineStore('siteInfo', () => {
 
   const siteName = computed(() =>
     pick(data.value?.site_name, DEFAULT_NAME)
-    || pick(data.value?.hero_title, DEFAULT_NAME)  // graceful fallback
+    || pick(data.value?.hero_title, DEFAULT_NAME)
     || DEFAULT_NAME.en
   )
 
@@ -66,6 +79,40 @@ export const useSiteInfoStore = defineStore('siteInfo', () => {
   })
 
   const issn = computed(() => data.value?.issn_online || data.value?.issn_print || '')
+  const licenseType = computed(() => data.value?.license_type || '')
 
-  return { data, loaded, load, siteName, tagline, logoUrl, issn }
+  const footerDescription = computed(() => pick(data.value?.footer_description, { uz: '', ru: '', en: '' }))
+
+  const contactEmail = computed(() => data.value?.contact_email || '')
+  const contactPhone = computed(() => data.value?.contact_phone || '')
+  const contactAddress = computed(() => data.value?.contact_address || '')
+
+  const socials = computed(() => {
+    const d = data.value
+    if (!d) return [] as { label: string; url: string }[]
+    const items: { label: string; url: string }[] = []
+    if (d.social_telegram)  items.push({ label: 'Telegram',  url: d.social_telegram })
+    if (d.social_facebook)  items.push({ label: 'Facebook',  url: d.social_facebook })
+    if (d.social_instagram) items.push({ label: 'Instagram', url: d.social_instagram })
+    if (d.social_youtube)   items.push({ label: 'YouTube',   url: d.social_youtube })
+    if (d.social_linkedin)  items.push({ label: 'LinkedIn',  url: d.social_linkedin })
+    if (d.social_twitter)   items.push({ label: 'X / Twitter', url: d.social_twitter })
+    return items
+  })
+
+  return {
+    data,
+    loaded,
+    load,
+    siteName,
+    tagline,
+    logoUrl,
+    issn,
+    licenseType,
+    footerDescription,
+    contactEmail,
+    contactPhone,
+    contactAddress,
+    socials,
+  }
 })

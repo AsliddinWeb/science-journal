@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Check, Loader2, Image, X, Palette, Film, Upload } from 'lucide-vue-next'
+import { Check, Loader2, Image, X, Palette, Film, Upload, Mail, Phone, MapPin, Share2 } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -29,6 +29,16 @@ const form = ref({
   site_logo_url: '',
   site_name: { uz: '', ru: '', en: '' },
   site_tagline: { uz: '', ru: '', en: '' },
+  footer_description: { uz: '', ru: '', en: '' },
+  contact_email: '',
+  contact_phone: '',
+  contact_address: '',
+  social_telegram: '',
+  social_facebook: '',
+  social_instagram: '',
+  social_youtube: '',
+  social_linkedin: '',
+  social_twitter: '',
   hero_title: { uz: '', ru: '', en: '' },
   hero_subtitle: { uz: '', ru: '', en: '' },
   hero_issn: '',
@@ -67,6 +77,16 @@ onMounted(async () => {
       site_logo_url: data.site_logo_url || '',
       site_name: data.site_name || { uz: '', ru: '', en: '' },
       site_tagline: data.site_tagline || { uz: '', ru: '', en: '' },
+      footer_description: data.footer_description || { uz: '', ru: '', en: '' },
+      contact_email: data.contact_email || '',
+      contact_phone: data.contact_phone || '',
+      contact_address: data.contact_address || '',
+      social_telegram: data.social_telegram || '',
+      social_facebook: data.social_facebook || '',
+      social_instagram: data.social_instagram || '',
+      social_youtube: data.social_youtube || '',
+      social_linkedin: data.social_linkedin || '',
+      social_twitter: data.social_twitter || '',
       hero_title: data.hero_title || { uz: '', ru: '', en: '' },
       hero_subtitle: data.hero_subtitle || { uz: '', ru: '', en: '' },
       hero_issn: data.hero_issn || '',
@@ -458,6 +478,70 @@ async function uploadHeroPoster(e: Event) {
           <div>
             <label class="label-base">{{ t('admin.homeSettings.ctaSubtitle') }} ({{ langTab.toUpperCase() }})</label>
             <textarea v-model="form.cta_subtitle[langTab]" rows="2" class="input-base w-full resize-none" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ Footer — tavsif, kontakt, ijtimoiy tarmoqlar ══ -->
+      <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+        <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">Footer — tavsif va kontakt</h2>
+
+        <!-- Description per language -->
+        <div class="mb-6">
+          <label class="label-base">Footer tavsifi ({{ langTab.toUpperCase() }})</label>
+          <textarea
+            v-model="form.footer_description[langTab]"
+            rows="3"
+            class="input-base w-full resize-none"
+            placeholder="Jurnal haqida qisqa ma'lumot — logo ostidagi matn"
+          />
+        </div>
+
+        <!-- Contact -->
+        <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Aloqa</h3>
+        <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div>
+            <label class="label-base flex items-center gap-1.5"><Mail :size="13" /> Email</label>
+            <input v-model="form.contact_email" type="email" class="input-base w-full" placeholder="editor@academicbook.uz" />
+          </div>
+          <div>
+            <label class="label-base flex items-center gap-1.5"><Phone :size="13" /> Telefon</label>
+            <input v-model="form.contact_phone" class="input-base w-full" placeholder="+998 …" />
+          </div>
+          <div>
+            <label class="label-base flex items-center gap-1.5"><MapPin :size="13" /> Manzil</label>
+            <input v-model="form.contact_address" class="input-base w-full" placeholder="Toshkent, Oʻzbekiston" />
+          </div>
+        </div>
+
+        <!-- Social -->
+        <h3 class="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <Share2 :size="13" /> Ijtimoiy tarmoqlar (to'liq URL)
+        </h3>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label class="label-base">Telegram</label>
+            <input v-model="form.social_telegram" class="input-base w-full font-mono text-xs" placeholder="https://t.me/…" />
+          </div>
+          <div>
+            <label class="label-base">Facebook</label>
+            <input v-model="form.social_facebook" class="input-base w-full font-mono text-xs" placeholder="https://facebook.com/…" />
+          </div>
+          <div>
+            <label class="label-base">Instagram</label>
+            <input v-model="form.social_instagram" class="input-base w-full font-mono text-xs" placeholder="https://instagram.com/…" />
+          </div>
+          <div>
+            <label class="label-base">YouTube</label>
+            <input v-model="form.social_youtube" class="input-base w-full font-mono text-xs" placeholder="https://youtube.com/@…" />
+          </div>
+          <div>
+            <label class="label-base">LinkedIn</label>
+            <input v-model="form.social_linkedin" class="input-base w-full font-mono text-xs" placeholder="https://linkedin.com/company/…" />
+          </div>
+          <div>
+            <label class="label-base">X / Twitter</label>
+            <input v-model="form.social_twitter" class="input-base w-full font-mono text-xs" placeholder="https://x.com/…" />
           </div>
         </div>
       </section>

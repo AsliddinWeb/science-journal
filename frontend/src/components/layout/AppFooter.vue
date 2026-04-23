@@ -1,42 +1,69 @@
 <script setup lang="ts">
-import { BookOpen, ExternalLink } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import {
+  BookOpen, ExternalLink, Mail, Phone, MapPin,
+  Send, Facebook, Instagram, Youtube, Linkedin, Twitter,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { api } from '@/composables/useApi'
 import { useSiteInfoStore } from '@/stores/siteInfo'
 
 const { t } = useI18n()
 const siteInfo = useSiteInfoStore()
 const currentYear = new Date().getFullYear()
 
-const indexingLogos = [
-  { name: 'Zenodo', abbr: 'Z', color: 'bg-blue-600' },
-  { name: 'Google Scholar', abbr: 'G', color: 'bg-red-500' },
-  { name: 'Copernicus', abbr: 'IC', color: 'bg-orange-500' },
-  { name: 'eLibrary', abbr: 'eL', color: 'bg-green-600' },
-  { name: 'DOAJ', abbr: 'D', color: 'bg-teal-600' },
-  { name: 'Crossref', abbr: 'CR', color: 'bg-slate-700' },
-]
+// Map social labels to icon components
+const socialIcons: Record<string, any> = {
+  'Telegram': Send,
+  'Facebook': Facebook,
+  'Instagram': Instagram,
+  'YouTube': Youtube,
+  'LinkedIn': Linkedin,
+  'X / Twitter': Twitter,
+}
+
+// Indexing databases (managed at /admin/indexing)
+interface IndexingItem { id: string; name: string; url: string; logo_url?: string }
+const indexing = ref<IndexingItem[]>([])
+
+onMounted(async () => {
+  try {
+    indexing.value = await api.get<IndexingItem[]>('/api/indexing')
+  } catch { /* silent */ }
+})
+
+function resolveLogo(u?: string) {
+  if (!u) return ''
+  return u.startsWith('http') || u.startsWith('/') ? u : `/api/uploads/${u}`
+}
 </script>
 
 <template>
   <footer class="border-t border-journal-700 bg-journal-900 text-slate-300">
 
-    <!-- Indexing row -->
-    <div class="border-b border-journal-800 bg-journal-950">
+    <!-- Indexing row — real data from /api/indexing -->
+    <div v-if="indexing.length" class="border-b border-journal-800 bg-journal-950">
       <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <p class="mb-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <p class="mb-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
           {{ t('footer.indexed_in') }}
         </p>
         <div class="flex flex-wrap items-center justify-center gap-3">
-          <div
-            v-for="db in indexingLogos"
-            :key="db.name"
-            class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          <a
+            v-for="db in indexing"
+            :key="db.id"
+            :href="db.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-2 rounded-lg border border-slate-700 bg-journal-800 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-primary-400 hover:text-primary-200"
           >
-            <span :class="['flex h-5 w-5 items-center justify-center rounded text-white text-xs font-bold', db.color]">
-              {{ db.abbr.charAt(0) }}
-            </span>
+            <img
+              v-if="db.logo_url"
+              :src="resolveLogo(db.logo_url)"
+              :alt="db.name"
+              class="h-5 w-auto max-w-[24px] object-contain"
+            />
             {{ db.name }}
-          </div>
+          </a>
         </div>
       </div>
     </div>
@@ -66,17 +93,22 @@ const indexingLogos = [
               </span>
             </template>
           </RouterLink>
-          <p class="mt-4 text-sm leading-relaxed text-slate-400">
-            {{ t('footer.description') }}
+
+          <p v-if="siteInfo.footerDescription" class="mt-4 text-sm leading-relaxed text-slate-400">
+            {{ siteInfo.footerDescription }}
           </p>
-          <p class="mt-2 text-xs text-slate-500">ISSN: 2181-0842 (Online)</p>
-          <div class="mt-4 flex items-center gap-1.5 rounded-lg bg-journal-800 px-3 py-2">
+
+          <p v-if="siteInfo.issn" class="mt-2 text-xs text-slate-500">
+            ISSN: {{ siteInfo.issn }}
+          </p>
+
+          <div v-if="siteInfo.licenseType" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-journal-800 px-3 py-2">
             <svg viewBox="0 0 100 100" class="h-5 w-5 shrink-0" aria-hidden="true">
               <circle cx="50" cy="50" r="48" fill="#a6ce39"/>
               <path d="M 22 50 L 45 50 L 45 22" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
               <path d="M 78 50 L 55 50 L 55 78" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
             </svg>
-            <span class="text-xs font-medium text-slate-300">CC BY 4.0</span>
+            <span class="text-xs font-medium text-slate-300">{{ siteInfo.licenseType }}</span>
           </div>
         </div>
 
@@ -108,7 +140,6 @@ const indexingLogos = [
           <ul class="mt-4 flex flex-col gap-2.5">
             <li v-for="link in [
               { to: '/pages/author-guidelines', label: t('footer.author_guidelines') },
-              { to: '/pages/author-guidelines', label: t('footer.author_guidelines') },
               { to: '/pages/review-process', label: t('footer.review_process') },
               { to: '/pages/open-access', label: t('footer.open_access') },
               { to: '/pages/plagiarism', label: t('footer.plagiarism_policy') },
@@ -125,26 +156,39 @@ const indexingLogos = [
           <h3 class="text-sm font-semibold uppercase tracking-wider text-primary-300">
             {{ t('footer.contact_us') }}
           </h3>
-          <ul class="mt-4 flex flex-col gap-2.5 text-sm text-slate-400">
-            <li>
-              <a href="mailto:editor@journal.uz" class="transition-colors hover:text-primary-300">
-                editor@journal.uz
+          <ul class="mt-4 flex flex-col gap-3 text-sm text-slate-400">
+            <li v-if="siteInfo.contactEmail" class="flex items-start gap-2">
+              <Mail :size="14" class="mt-0.5 text-slate-500" />
+              <a :href="`mailto:${siteInfo.contactEmail}`" class="transition-colors hover:text-primary-300">
+                {{ siteInfo.contactEmail }}
               </a>
             </li>
-            <li>+998 71 123 45 67</li>
-            <li>Tashkent, Uzbekistan</li>
-            <li>
-              <a
-                href="https://t.me/scienceinnovationjournal"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1 transition-colors hover:text-primary-300"
-              >
-                <ExternalLink :size="12" />
-                Telegram Channel
+            <li v-if="siteInfo.contactPhone" class="flex items-start gap-2">
+              <Phone :size="14" class="mt-0.5 text-slate-500" />
+              <a :href="`tel:${siteInfo.contactPhone.replace(/\s+/g, '')}`" class="transition-colors hover:text-primary-300">
+                {{ siteInfo.contactPhone }}
               </a>
+            </li>
+            <li v-if="siteInfo.contactAddress" class="flex items-start gap-2">
+              <MapPin :size="14" class="mt-0.5 text-slate-500" />
+              <span>{{ siteInfo.contactAddress }}</span>
             </li>
           </ul>
+
+          <!-- Social icons -->
+          <div v-if="siteInfo.socials.length" class="mt-5 flex flex-wrap items-center gap-2">
+            <a
+              v-for="s in siteInfo.socials"
+              :key="s.label"
+              :href="s.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              :title="s.label"
+              class="flex h-8 w-8 items-center justify-center rounded-lg border border-journal-700 bg-journal-800 text-slate-400 transition hover:border-primary-400 hover:text-primary-300"
+            >
+              <component :is="socialIcons[s.label] || ExternalLink" :size="14" />
+            </a>
+          </div>
         </div>
       </div>
 

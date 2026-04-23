@@ -28,6 +28,18 @@ class HomeSettings(Base):
     site_name: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     site_tagline: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
+    # Footer content
+    footer_description: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    contact_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    contact_phone: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    contact_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    social_telegram: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    social_facebook: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    social_instagram: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    social_youtube: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    social_linkedin: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    social_twitter: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # About section (inside hero)
     about_title: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     about_text: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
