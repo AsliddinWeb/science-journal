@@ -33,6 +33,16 @@ class EditorialBoardMember(Base):
     photo_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     orcid_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # Additional profile fields
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    degree: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    specialization: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    scopus_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    researcher_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    google_scholar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    website_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 

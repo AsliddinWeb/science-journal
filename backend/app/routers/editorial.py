@@ -25,6 +25,13 @@ class EditorialMemberRead(BaseModel):
     photo_url: Optional[str] = None
     bio: Optional[str] = None
     orcid_id: Optional[str] = None
+    email: Optional[str] = None
+    degree: Optional[str] = None
+    specialization: Optional[str] = None
+    scopus_id: Optional[str] = None
+    researcher_id: Optional[str] = None
+    google_scholar_url: Optional[str] = None
+    website_url: Optional[str] = None
     order: int
     is_active: bool
     created_at: datetime
@@ -39,6 +46,14 @@ class EditorialMemberCreate(BaseModel):
     photo_url: Optional[str] = None
     bio: Optional[str] = None
     orcid_id: Optional[str] = None
+    email: Optional[str] = None
+    degree: Optional[str] = None
+    specialization: Optional[str] = None
+    scopus_id: Optional[str] = None
+    researcher_id: Optional[str] = None
+    google_scholar_url: Optional[str] = None
+    website_url: Optional[str] = None
+    is_active: bool = True
     order: int = 0
     user_id: Optional[UUID] = None
 

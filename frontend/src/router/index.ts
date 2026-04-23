@@ -220,6 +220,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Tahririyat kengashi' },
       },
       {
+        path: 'editorial/new',
+        name: 'admin-editorial-new',
+        component: () => import('@/views/admin/AdminEditorialFormView.vue'),
+        meta: { title: 'Yangi a\'zo' },
+      },
+      {
+        path: 'editorial/:id/edit',
+        name: 'admin-editorial-edit',
+        component: () => import('@/views/admin/AdminEditorialFormView.vue'),
+        meta: { title: 'A\'zoni tahrirlash' },
+      },
+      {
         path: 'pages',
         name: 'admin-pages',
         component: () => import('@/views/admin/AdminPagesView.vue'),
