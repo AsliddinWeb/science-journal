@@ -190,7 +190,7 @@ class ConferencePaperRead(BaseModel):
     language: ArticleLanguage
     conference_id: UUID
     session_id: Optional[UUID] = None
-    author_id: UUID
+    author_id: Optional[UUID] = None
     doi: Optional[str] = None
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
@@ -241,7 +241,8 @@ class AdminConferencePaperCreate(BaseModel):
     language: ArticleLanguage = ArticleLanguage.uz
     conference_id: UUID
     session_id: Optional[UUID] = None
-    author_id: UUID
+    # Either pick a registered user OR leave null and use guest co_authors
+    author_id: Optional[UUID] = None
     co_authors: List[ConferencePaperAuthorCreate] = []
     status: ConferencePaperStatus = ConferencePaperStatus.draft
     doi: Optional[str] = None

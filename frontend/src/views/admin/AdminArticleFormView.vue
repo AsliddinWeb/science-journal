@@ -58,6 +58,12 @@ const form = reactive({
   issue_id: '',
   author_id: '',
   author_name: '',
+  // "registered" = pick existing user, "guest" = inline author fields
+  author_mode: 'registered' as 'registered' | 'guest',
+  guest_author_name: '',
+  guest_author_email: '',
+  guest_author_affiliation: '',
+  guest_author_orcid: '',
   status: 'draft' as string,
   doi: '',
   published_date: '',
@@ -93,8 +99,24 @@ async function loadArticle() {
     form.category_id = data.category_id || ''
     form.volume_id = data.volume_id || ''
     form.issue_id = data.issue_id || ''
-    form.author_id = data.author_id
+    form.author_id = data.author_id || ''
     form.author_name = data.author?.full_name || ''
+    form.author_mode = data.author_id ? 'registered' : 'guest'
+
+    // In guest mode, extract the primary co-author into guest_author_* fields
+    let guestPrimaryId: string | null = null
+    if (!data.author_id) {
+      const cos = data.co_authors ?? []
+      const primary = cos.find(c => c.is_corresponding) ?? cos[0]
+      if (primary) {
+        const pu = (primary.user as any) ?? {}
+        guestPrimaryId = primary.id
+        form.guest_author_name = primary.guest_name || pu.full_name || ''
+        form.guest_author_email = primary.guest_email || pu.email || ''
+        form.guest_author_affiliation = primary.guest_affiliation || pu.affiliation || ''
+        form.guest_author_orcid = primary.guest_orcid || pu.orcid_id || ''
+      }
+    }
     form.status = data.status
     form.doi = data.doi || ''
     form.published_date = data.published_date ? data.published_date.split('T')[0] : ''
@@ -117,7 +139,7 @@ async function loadArticle() {
     form.funding = data.funding || ''
     form.conflict_of_interest = data.conflict_of_interest || ''
     form.acknowledgments = data.acknowledgments || ''
-    form.co_authors = data.co_authors.map(a => ({
+    form.co_authors = data.co_authors.filter(a => a.id !== guestPrimaryId).map(a => ({
       guest_name: a.guest_name || a.user?.full_name || '',
       guest_email: a.guest_email || a.user?.email || '',
       guest_affiliation: a.guest_affiliation || '',
@@ -193,11 +215,29 @@ async function uploadPdf(e: Event) {
 }
 
 async function save() {
-  if (!form.author_id) { toast.error("Muallif tanlanmagan"); return }
+  const guestFilled = !!form.guest_author_name.trim()
+  if (form.author_mode === 'registered' && !form.author_id) {
+    toast.error("Muallif tanlanmagan"); return
+  }
+  if (form.author_mode === 'guest' && !guestFilled) {
+    toast.error("Mehmon muallif ismini kiriting"); return
+  }
   if (!form.title.uz && !form.title.ru && !form.title.en) { toast.error("Sarlavha kiritilmagan"); return }
 
   saving.value = true
   try {
+    // In guest mode, the inline author becomes the corresponding co-author (primary).
+    const guestPrimary = form.author_mode === 'guest' && guestFilled
+      ? [{
+          guest_name: form.guest_author_name.trim(),
+          guest_email: form.guest_author_email.trim() || null,
+          guest_affiliation: form.guest_author_affiliation.trim() || null,
+          guest_orcid: form.guest_author_orcid.trim() || null,
+          order: 1,
+          is_corresponding: true,
+        }]
+      : []
+
     const payload = {
       title: form.title,
       abstract: form.abstract,
@@ -210,7 +250,7 @@ async function save() {
       category_id: form.category_id || null,
       volume_id: form.volume_id || null,
       issue_id: form.issue_id || null,
-      author_id: form.author_id,
+      author_id: form.author_mode === 'registered' ? form.author_id : null,
       status: form.status,
       doi: form.doi || null,
       published_date: form.published_date || null,
@@ -230,14 +270,17 @@ async function save() {
       funding: form.funding || null,
       conflict_of_interest: form.conflict_of_interest || null,
       acknowledgments: form.acknowledgments || null,
-      co_authors: form.co_authors.filter(a => a.guest_name).map((a, i) => ({
-        guest_name: a.guest_name,
-        guest_email: a.guest_email || null,
-        guest_affiliation: a.guest_affiliation || null,
-        guest_orcid: a.guest_orcid || null,
-        order: i + 1,
-        is_corresponding: a.is_corresponding,
-      })),
+      co_authors: [
+        ...guestPrimary,
+        ...form.co_authors.filter(a => a.guest_name).map((a, i) => ({
+          guest_name: a.guest_name,
+          guest_email: a.guest_email || null,
+          guest_affiliation: a.guest_affiliation || null,
+          guest_orcid: a.guest_orcid || null,
+          order: guestPrimary.length + i + 1,
+          is_corresponding: a.is_corresponding,
+        })),
+      ],
     }
 
     if (isEdit.value) {
@@ -337,7 +380,25 @@ onMounted(async () => {
         <!-- Author selector -->
         <div class="mb-4">
           <label class="label-base">{{ t('admin.articles.author') }} *</label>
-          <div class="relative">
+
+          <!-- Mode toggle -->
+          <div class="mb-3 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/50">
+            <button
+              type="button"
+              class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+              :class="form.author_mode === 'registered' ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700'"
+              @click="form.author_mode = 'registered'"
+            >Ro'yxatdagi foydalanuvchi</button>
+            <button
+              type="button"
+              class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+              :class="form.author_mode === 'guest' ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700'"
+              @click="form.author_mode = 'guest'"
+            >Mehmon muallif</button>
+          </div>
+
+          <!-- Registered user mode -->
+          <div v-if="form.author_mode === 'registered'" class="relative">
             <div v-if="form.author_id" class="flex items-center gap-2 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 dark:border-primary-700 dark:bg-primary-950/30">
               <span class="flex-1 text-sm font-medium text-primary-800 dark:text-primary-300">{{ form.author_name }}</span>
               <button class="text-slate-400 hover:text-red-500" @click="form.author_id = ''; form.author_name = ''">
@@ -364,6 +425,31 @@ onMounted(async () => {
                 </button>
               </div>
             </div>
+          </div>
+
+          <!-- Guest inline mode -->
+          <div v-else class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="label-base">To'liq ism *</label>
+                <input v-model="form.guest_author_name" class="input-base w-full" placeholder="Ism Familiya" />
+              </div>
+              <div>
+                <label class="label-base">Email</label>
+                <input v-model="form.guest_author_email" type="email" class="input-base w-full" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="label-base">Affiliation</label>
+                <input v-model="form.guest_author_affiliation" class="input-base w-full" placeholder="Tashkilot / Universitet" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="label-base">ORCID</label>
+                <input v-model="form.guest_author_orcid" class="input-base w-full font-mono" placeholder="0000-0000-0000-0000" />
+              </div>
+            </div>
+            <p class="mt-3 text-[11px] text-slate-400">
+              Ushbu muallif tizimda foydalanuvchi sifatida ro'yxatdan o'tmasdan maqolaga biriktiriladi (corresponding muallif sifatida).
+            </p>
           </div>
         </div>
 

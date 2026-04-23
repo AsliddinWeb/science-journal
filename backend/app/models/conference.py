@@ -107,8 +107,8 @@ class ConferencePaper(Base):
     session_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("conference_sessions.id"), nullable=True, index=True
     )
-    author_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    author_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
     )
 
     doi: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True, index=True)

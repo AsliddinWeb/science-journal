@@ -101,7 +101,8 @@ class AdminArticleCreate(BaseModel):
     category_id: Optional[UUID] = None
     volume_id: Optional[UUID] = None
     issue_id: Optional[UUID] = None
-    author_id: UUID
+    # Either pick a registered user OR leave null and rely on co_authors (guest-only flow)
+    author_id: Optional[UUID] = None
     co_authors: List[ArticleAuthorCreate] = []
     status: ArticleStatus = ArticleStatus.draft
     doi: Optional[str] = None
