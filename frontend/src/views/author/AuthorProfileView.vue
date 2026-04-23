@@ -15,7 +15,7 @@ const user = computed(() => authStore.user)
 const profile = reactive({
   full_name: '',
   affiliation: '',
-  country: '',
+  country: "O'zbekiston",
   orcid_id: '',
 })
 const profileErrors = reactive({ full_name: '', orcid_id: '' })
@@ -27,7 +27,7 @@ onMounted(() => {
   if (user.value) {
     profile.full_name = user.value.full_name ?? ''
     profile.affiliation = user.value.affiliation ?? ''
-    profile.country = user.value.country ?? ''
+    profile.country = user.value.country || "O'zbekiston"
     profile.orcid_id = user.value.orcid_id ?? ''
   }
 })

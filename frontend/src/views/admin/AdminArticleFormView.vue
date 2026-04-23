@@ -72,7 +72,7 @@ const form = reactive({
   pdf_file_size: null as number | null,
   article_type: '',
   cover_letter: '',
-  references: { uz: '', ru: '', en: '' },
+  references: '' as string,
   funding: '',
   conflict_of_interest: '',
   acknowledgments: '',
@@ -126,15 +126,13 @@ async function loadArticle() {
     form.article_type = data.article_type || ''
     form.cover_letter = data.cover_letter || ''
     if (Array.isArray(data.references)) {
-      form.references = { uz: (data.references || []).join('\n'), ru: '', en: '' }
+      form.references = (data.references || []).join('\n')
     } else if (data.references && typeof data.references === 'object') {
-      form.references = {
-        uz: ((data.references as any).uz || []).join('\n'),
-        ru: ((data.references as any).ru || []).join('\n'),
-        en: ((data.references as any).en || []).join('\n'),
-      }
+      // Legacy multilingual shape — flatten uz + ru + en into one list
+      const r = data.references as any
+      form.references = [...(r.uz ?? []), ...(r.ru ?? []), ...(r.en ?? [])].join('\n')
     } else {
-      form.references = { uz: '', ru: '', en: '' }
+      form.references = ''
     }
     form.funding = data.funding || ''
     form.conflict_of_interest = data.conflict_of_interest || ''
@@ -259,14 +257,9 @@ async function save() {
       pdf_file_size: form.pdf_file_size || null,
       article_type: form.article_type || null,
       cover_letter: form.cover_letter || null,
-      references: (() => {
-        const out: Record<string, string[]> = {
-          uz: form.references.uz ? form.references.uz.split('\n').map(s => s.trim()).filter(Boolean) : [],
-          ru: form.references.ru ? form.references.ru.split('\n').map(s => s.trim()).filter(Boolean) : [],
-          en: form.references.en ? form.references.en.split('\n').map(s => s.trim()).filter(Boolean) : [],
-        }
-        return (out.uz.length || out.ru.length || out.en.length) ? out : null
-      })(),
+      references: form.references
+        ? form.references.split('\n').map(s => s.trim()).filter(Boolean)
+        : null,
       funding: form.funding || null,
       conflict_of_interest: form.conflict_of_interest || null,
       acknowledgments: form.acknowledgments || null,
@@ -607,24 +600,11 @@ onMounted(async () => {
       <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <h2 class="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-500">{{ t('admin.articles.references') }}</h2>
         <p class="mb-3 text-xs text-slate-400">{{ t('admin.articles.references_hint') }}</p>
-
-        <!-- Lang tabs for references -->
-        <div class="mb-4 flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/50">
-          <button
-            v-for="lang in (['uz', 'ru', 'en'] as const)"
-            :key="lang"
-            type="button"
-            class="rounded-md px-4 py-1.5 text-sm font-medium transition"
-            :class="langTab === lang ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700'"
-            @click="langTab = lang"
-          >{{ lang.toUpperCase() }}</button>
-        </div>
-
         <textarea
-          v-model="form.references[langTab]"
+          v-model="form.references"
           rows="8"
           class="input-base w-full resize-y font-mono text-sm"
-          :placeholder="`[1] Ivanov I.I. Title of article. Journal Name. 2024;1(1):1-10.\n[2] Smith J. Another reference... (${langTab})`"
+          placeholder="[1] Ivanov I.I. Title of article. Journal Name. 2024;1(1):1-10.&#10;[2] Smith J. Another reference..."
         />
       </section>
 

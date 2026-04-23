@@ -14,7 +14,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
-const form = ref({ email: '', password: '', full_name: '', affiliation: '', country: '', orcid_id: '' })
+const form = ref({ email: '', password: '', full_name: '', affiliation: '', country: "O'zbekiston", orcid_id: '' })
 const loading = ref(false)
 const errors = ref<Record<string, string>>({})
 

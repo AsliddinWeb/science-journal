@@ -80,7 +80,7 @@ const manual = reactive({
   guest_name: '',
   guest_email: '',
   guest_affiliation: '',
-  guest_country: '',
+  guest_country: "O'zbekiston",
   guest_orcid: '',
 })
 const manualErrors = reactive({

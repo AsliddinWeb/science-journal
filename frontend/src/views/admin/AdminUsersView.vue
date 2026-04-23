@@ -38,7 +38,7 @@ const editForm = reactive({
   full_name: '',
   email: '',
   affiliation: '',
-  country: '',
+  country: "O'zbekiston",
   orcid_id: '',
   role: 'reader' as string,
   is_active: true,
@@ -50,7 +50,7 @@ function openEdit(user: User) {
   editForm.full_name = user.full_name || ''
   editForm.email = user.email || ''
   editForm.affiliation = (user as any).affiliation || ''
-  editForm.country = (user as any).country || ''
+  editForm.country = (user as any).country || "O'zbekiston"
   editForm.orcid_id = (user as any).orcid_id || ''
   editForm.role = (user as any).role || 'reader'
   editForm.is_active = !!(user as any).is_active
