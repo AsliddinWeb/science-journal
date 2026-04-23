@@ -51,7 +51,14 @@ function isSystemAccount(role?: string): boolean {
 }
 
 // Uzbek patronymic suffixes — not surnames, must be preserved separately.
-const UZ_PATRONYMIC = /^(o[''`]?g[''`]?li|og[''`]?li|ogli|qizi|qız[ıi])$/i
+// The apostrophe class covers all common variants used in Uzbek Latin:
+//   ' (ASCII \x27), ` (\x60), ´ (\xB4), ʻ (ʻ — official Uzbek),
+//   ʼ (ʼ), ‘ (‘), ’ (’).
+const UZ_AP = '[\\u02BB\\u02BC\\u2018\\u2019\\x27\\x60\\xB4]'
+const UZ_PATRONYMIC = new RegExp(
+  `^(o${UZ_AP}?g${UZ_AP}?li|og${UZ_AP}?li|ogli|qizi|qız[ıi])$`,
+  'i',
+)
 
 /**
  * Format an author's full name in "Familiya, I. F." style for

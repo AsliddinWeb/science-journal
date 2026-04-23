@@ -35,7 +35,11 @@ const year = computed(() =>
     : new Date().getFullYear()
 )
 
-const UZ_PATRONYMIC = /^(o[''`]?g[''`]?li|og[''`]?li|ogli|qizi|qız[ıi])$/i
+const UZ_AP = '[\\u02BB\\u02BC\\u2018\\u2019\\x27\\x60\\xB4]'
+const UZ_PATRONYMIC = new RegExp(
+  `^(o${UZ_AP}?g${UZ_AP}?li|og${UZ_AP}?li|ogli|qizi|qız[ıi])$`,
+  'i',
+)
 function scholarName(fullName: string): string {
   const raw = fullName.trim().split(/\s+/).filter(Boolean)
   if (raw.length < 2) return fullName.trim()
