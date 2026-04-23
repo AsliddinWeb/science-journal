@@ -282,7 +282,8 @@ const citationText = computed(() => {
 
   const authorStr = authors.value.map(au => toScholarName(au.fullName)).join(', ')
 
-  const articleTitle = (a.title as any)?.en || (a.title as any)?.uz || 'Untitled'
+  // Use the title in the reader's locale (falls back to en → uz → ru).
+  const articleTitle = getLocalizedField(a.title as any, localeStore.current, 'Untitled')
   const year = a.published_date ? new Date(a.published_date).getFullYear() : ''
   const journalName = siteInfo.siteName
   const volIss = a.volume
@@ -290,15 +291,21 @@ const citationText = computed(() => {
     : ''
   const pages = a.pages || ''
   const doi = a.doi ? `https://doi.org/${a.doi}` : ''
-
   const articleUrl = typeof window !== 'undefined' ? window.location.href : `/articles/${a.id}`
-  let citation = ''
-  if (authorStr) citation += `${authorStr} `
-  if (year) citation += `(${year}). `
-  citation += `${articleTitle}. ${journalName}`
-  if (volIss) citation += `, ${volIss}`
-  if (pages) citation += `, ${pages}`
-  citation += '.'
+
+  // APA-style: Authors (Year). Title. Journal, Vol(Issue), Pages. DOI / URL
+  const parts: string[] = []
+  if (authorStr) parts.push(authorStr)
+  parts.push(`(${year}).`)
+  parts.push(`${articleTitle}.`)
+
+  const pubBits: string[] = []
+  if (journalName) pubBits.push(journalName)
+  if (volIss) pubBits.push(volIss)
+  if (pages) pubBits.push(pages)
+  if (pubBits.length) parts.push(pubBits.join(', ') + '.')
+
+  let citation = parts.join(' ')
   if (doi) citation += ` ${doi}`
   citation += `\n${articleUrl}`
   return citation
@@ -349,75 +356,23 @@ const pdfHref = computed(() => {
       </nav>
 
       <!-- ── Hero card: title + authors + meta + actions ── -->
-      <section class="overflow-hidden rounded-2xl border border-primary-200 bg-white shadow-sm dark:border-primary-900/50 dark:bg-slate-800">
-        <div class="h-1.5 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-800" />
+      <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-800" />
 
-        <div class="p-6 sm:p-8">
-          <!-- Title -->
-          <h1 class="flex items-start gap-3 font-serif text-2xl font-bold leading-tight text-slate-900 dark:text-white sm:text-3xl">
-            <BadgeCheck :size="28" class="mt-1 shrink-0 text-primary-500" />
-            <span>{{ title }}</span>
-          </h1>
-
-          <!-- Unified authors list — row by row -->
-          <ul v-if="authors.length" class="mt-5 space-y-2 border-l-2 border-primary-200 pl-4 dark:border-primary-900/50">
-            <li v-for="au in authors" :key="au.id" class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span class="font-serif text-[15px] font-semibold text-slate-900 dark:text-white">
-                {{ au.fullName }}
-              </span>
-              <span
-                v-if="au.isCorresponding"
-                class="rounded bg-primary-100 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-primary-700 dark:bg-primary-950 dark:text-primary-300"
-                :title="t('author.submit.corresponding')"
-              >
-                *
-              </span>
-              <span v-if="au.affiliation" class="text-sm text-slate-500 dark:text-slate-400">
-                — {{ au.affiliation }}<span v-if="au.country"> · {{ au.country }}</span>
-              </span>
-              <a
-                v-if="au.orcidId"
-                :href="`https://orcid.org/${au.orcidId}`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="ml-auto inline-flex items-center gap-1 text-xs text-[#a6ce39] hover:underline"
-              >
-                <svg viewBox="0 0 100 100" class="h-4 w-4"><circle cx="50" cy="50" r="48" fill="#a6ce39"/><path d="M 22 50 L 45 50 L 45 22" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M 78 50 L 55 50 L 55 78" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/></svg>
-                {{ au.orcidId }}
-              </a>
-            </li>
-          </ul>
-
-          <!-- Meta badges row -->
-          <div class="mt-6 flex flex-wrap items-center gap-2">
-            <span
-              v-if="article.published_date"
-              class="inline-flex items-center gap-1.5 rounded-md bg-slate-800 px-3 py-1 text-xs font-medium text-white dark:bg-slate-900"
-            >
-              <Calendar :size="12" />{{ formatDate(article.published_date) }}
-            </span>
-            <span
-              v-if="article.volume"
-              class="inline-flex items-center gap-1.5 rounded-md bg-slate-800 px-3 py-1 text-xs font-medium text-white dark:bg-slate-900"
-            >
-              <BookOpen :size="12" />Volume {{ article.volume.number }}<span v-if="article.issue"> Issue {{ article.issue.number }}</span>
-            </span>
-            <span
-              v-if="article.pages"
-              class="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-            >
-              <Hash :size="12" />{{ article.pages }}
-            </span>
-            <span
-              class="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-            >
-              <Globe :size="12" />{{ langLabel }}
-            </span>
+        <div class="px-6 pt-7 pb-6 sm:px-10 sm:pt-10 sm:pb-8">
+          <!-- Top pills: article type + language -->
+          <div class="mb-4 flex flex-wrap items-center gap-2">
             <span
               v-if="article.article_type"
-              class="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+              class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-primary-700 dark:bg-primary-950/40 dark:text-primary-300"
             >
               {{ t(`admin.articles.type_${article.article_type}`) }}
+            </span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+              <Globe :size="11" />{{ langLabel }}
+            </span>
+            <span v-if="article.published_date" class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+              <Calendar :size="11" />{{ formatDate(article.published_date) }}
             </span>
 
             <!-- Stats on the right -->
@@ -426,6 +381,56 @@ const pdfHref = computed(() => {
               <span class="inline-flex items-center gap-1"><Download :size="13" />{{ article.download_count.toLocaleString() }}</span>
             </span>
           </div>
+
+          <!-- Title -->
+          <h1 class="font-serif text-2xl font-bold leading-[1.2] tracking-tight text-journal-800 dark:text-white sm:text-[2rem] sm:leading-[1.15]">
+            {{ title }}
+          </h1>
+
+          <!-- Unified authors list — inline flowing layout -->
+          <div v-if="authors.length" class="mt-5 border-t border-slate-100 pt-4 dark:border-slate-700">
+            <ul class="space-y-2">
+              <li v-for="au in authors" :key="au.id" class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span class="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
+                  {{ au.fullName }}
+                </span>
+                <span
+                  v-if="au.isCorresponding"
+                  class="rounded bg-primary-100 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-primary-700 dark:bg-primary-950 dark:text-primary-300"
+                  :title="t('author.submit.corresponding')"
+                >
+                  *
+                </span>
+                <span v-if="au.affiliation" class="text-sm text-slate-500 dark:text-slate-400">
+                  — {{ au.affiliation }}<span v-if="au.country"> · {{ au.country }}</span>
+                </span>
+                <a
+                  v-if="au.orcidId"
+                  :href="`https://orcid.org/${au.orcidId}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ml-auto inline-flex items-center gap-1 text-xs text-[#a6ce39] hover:underline"
+                >
+                  <svg viewBox="0 0 100 100" class="h-4 w-4"><circle cx="50" cy="50" r="48" fill="#a6ce39"/><path d="M 22 50 L 45 50 L 45 22" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M 78 50 L 55 50 L 55 78" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/></svg>
+                  {{ au.orcidId }}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Publication line — volume / issue / pages (only when journal has them) -->
+          <p
+            v-if="article.volume || article.pages"
+            class="mt-6 text-sm text-slate-500 dark:text-slate-400"
+          >
+            <span v-if="article.volume">
+              <BookOpen :size="13" class="-mt-0.5 mr-1 inline" />Volume {{ article.volume.number }}<span v-if="article.issue"> · Issue {{ article.issue.number }}</span>
+            </span>
+            <span v-if="article.pages">
+              <span v-if="article.volume" class="mx-2 text-slate-300">|</span>
+              <Hash :size="13" class="-mt-0.5 mr-1 inline" />{{ article.pages }}
+            </span>
+          </p>
 
           <!-- DOI -->
           <div v-if="article.doi" class="mt-5">
