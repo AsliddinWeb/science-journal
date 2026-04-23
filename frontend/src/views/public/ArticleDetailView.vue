@@ -295,6 +295,7 @@ const citationText = computed(() => {
   // Title in the article's own primary language — not the reader's locale.
   const articleTitle = getLocalizedField(a.title as any, a.language, 'Untitled')
   const year = a.published_date ? new Date(a.published_date).getFullYear() : ''
+  const journalName = siteInfo.siteName  // from /api/home-settings (site_name)
   const volIss = a.volume
     ? `${a.volume.number}${a.issue ? `(${a.issue.number})` : ''}`
     : ''
@@ -302,13 +303,14 @@ const citationText = computed(() => {
   const doi = a.doi ? `https://doi.org/${a.doi}` : ''
   const articleUrl = typeof window !== 'undefined' ? window.location.href : `/articles/${a.id}`
 
-  // Format: Authors (Year). Title. Vol(Issue), Pages. DOI \n URL
+  // APA-style: Authors (Year). Title. Journal, Vol(Issue), Pages. DOI \n URL
   const parts: string[] = []
   if (authorStr) parts.push(authorStr)
   parts.push(`(${year}).`)
   parts.push(`${articleTitle}.`)
 
   const pubBits: string[] = []
+  if (journalName) pubBits.push(journalName)
   if (volIss) pubBits.push(volIss)
   if (pages) pubBits.push(pages)
   if (pubBits.length) parts.push(pubBits.join(', ') + '.')
