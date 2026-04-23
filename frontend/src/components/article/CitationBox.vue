@@ -35,15 +35,30 @@ const year = computed(() =>
     : new Date().getFullYear()
 )
 
+const UZ_PATRONYMIC = /^(o[''`]?g[''`]?li|og[''`]?li|ogli|qizi|qız[ıi])$/i
+function scholarName(fullName: string): string {
+  const raw = fullName.trim().split(/\s+/).filter(Boolean)
+  if (raw.length < 2) return fullName.trim()
+  const patronymic: string[] = []
+  const parts = [...raw]
+  while (parts.length > 1 && UZ_PATRONYMIC.test(parts[parts.length - 1])) {
+    patronymic.unshift(parts.pop() as string)
+  }
+  if (parts.length < 2) return fullName.trim()
+  let last: string
+  let givens: string[]
+  if (patronymic.length > 0) {
+    last = parts[0]; givens = parts.slice(1)
+  } else {
+    last = parts[parts.length - 1]; givens = parts.slice(0, -1)
+  }
+  const initials = givens.map(p => p.charAt(0).toUpperCase() + '.').join(' ')
+  const tail = patronymic.length ? ` ${patronymic.join(' ')}` : ''
+  return initials ? `${last}, ${initials}${tail}` : `${last}${tail}`
+}
+
 const apa = computed(() => {
-  const authorStr = authors.value
-    .map((name) => {
-      const parts = name.trim().split(' ')
-      const last = parts[parts.length - 1]
-      const initials = parts.slice(0, -1).map((p) => p[0] + '.').join(' ')
-      return `${last}, ${initials}`
-    })
-    .join(', & ')
+  const authorStr = authors.value.map(scholarName).join(', & ')
   const doi = props.article.doi ? ` https://doi.org/${props.article.doi}` : ''
   return `${authorStr} (${year.value}). ${title.value}. *${siteInfo.siteName}*, ${props.article.volume_id ? '' : ''}.${doi}`
 })

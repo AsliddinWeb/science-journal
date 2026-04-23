@@ -50,11 +50,42 @@ function isSystemAccount(role?: string): boolean {
   return role === 'superadmin'
 }
 
+// Uzbek patronymic suffixes — not surnames, must be preserved separately.
+const UZ_PATRONYMIC = /^(o[''`]?g[''`]?li|og[''`]?li|ogli|qizi|qız[ıi])$/i
+
+/**
+ * Format an author's full name in "Familiya, I. F." style for
+ * citations and Google Scholar's citation_author tag. Handles:
+ *   - Uzbek order  "Karimov Firdavs Ismoil o'g'li" → "Karimov, F. I. o'g'li"
+ *   - Western order "John Smith"                    → "Smith, J."
+ */
 function toScholarName(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/)
+  const raw = fullName.trim().split(/\s+/).filter(Boolean)
+  if (raw.length < 2) return fullName.trim()
+
+  // Peel off trailing patronymic tokens (o'g'li, qizi, ...) to keep them intact
+  const patronymic: string[] = []
+  const parts = [...raw]
+  while (parts.length > 1 && UZ_PATRONYMIC.test(parts[parts.length - 1])) {
+    patronymic.unshift(parts.pop() as string)
+  }
   if (parts.length < 2) return fullName.trim()
-  const last = parts.pop() as string
-  return `${last}, ${parts.join(' ')}`
+
+  // If a patronymic was present, assume Uzbek order — surname is the first token.
+  // Otherwise, Western order — surname is the last token.
+  let last: string
+  let givens: string[]
+  if (patronymic.length > 0) {
+    last = parts[0]
+    givens = parts.slice(1)
+  } else {
+    last = parts[parts.length - 1]
+    givens = parts.slice(0, -1)
+  }
+
+  const initials = givens.map(p => p.charAt(0).toUpperCase() + '.').join(' ')
+  const tail = patronymic.length ? ` ${patronymic.join(' ')}` : ''
+  return initials ? `${last}, ${initials}${tail}` : `${last}${tail}`
 }
 
 // Unified list of all authors — main (article.author) + co-authors, in one flat array.
@@ -242,13 +273,7 @@ const citationText = computed(() => {
   const a = article.value
   if (!a) return ''
 
-  const authorStr = authors.value.map(au => {
-    const parts = au.fullName.trim().split(/\s+/)
-    if (parts.length < 2) return au.fullName
-    const last = parts.pop() as string
-    const initials = parts.map(p => p.charAt(0).toUpperCase() + '.').join(' ')
-    return `${last}, ${initials}`
-  }).join(', ')
+  const authorStr = authors.value.map(au => toScholarName(au.fullName)).join(', ')
 
   const articleTitle = (a.title as any)?.en || (a.title as any)?.uz || 'Untitled'
   const year = a.published_date ? new Date(a.published_date).getFullYear() : ''
