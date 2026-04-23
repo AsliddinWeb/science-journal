@@ -1,11 +1,11 @@
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 
-const SITE_NAME = 'Science and Innovation Journal'
 const DEFAULT_DESCRIPTION =
-  "International scientific journal covering science, technology and innovation. Open access, peer-reviewed. ISSN 2181-3337"
+  "Ochiq kirishli peer-review ilmiy jurnal."
 const DEFAULT_OG_IMAGE = '/og-default.png'
-const SITE_URL = 'https://scientists.uz'
+const SITE_URL = typeof window !== 'undefined' ? window.location.origin : ''
 
 export interface SeoOptions {
   title?: string
@@ -106,11 +106,13 @@ function setLink(rel: string, href: string) {
 
 export function useSeoMeta(options: SeoOptions = {}) {
   const route = useRoute()
+  const siteInfo = useSiteInfoStore()
 
   function apply(opts: SeoOptions) {
-    const title = opts.title ? `${opts.title} | ${SITE_NAME}` : SITE_NAME
+    const siteName = siteInfo.siteName
+    const title = opts.title ? `${opts.title} | ${siteName}` : siteName
     const description = opts.description || DEFAULT_DESCRIPTION
-    const ogTitle = opts.ogTitle || opts.title || SITE_NAME
+    const ogTitle = opts.ogTitle || opts.title || siteName
     const ogDescription = opts.ogDescription || description
     const ogImage = opts.ogImage || DEFAULT_OG_IMAGE
     const ogUrl = opts.ogUrl || `${SITE_URL}${route.fullPath}`
@@ -124,7 +126,7 @@ export function useSeoMeta(options: SeoOptions = {}) {
 
     // Open Graph
     setMeta('og:type', opts.type || 'website')
-    setMeta('og:site_name', SITE_NAME)
+    setMeta('og:site_name', siteName)
     setMeta('og:title', ogTitle)
     setMeta('og:description', ogDescription)
     setMeta('og:image', ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`)
@@ -142,8 +144,9 @@ export function useSeoMeta(options: SeoOptions = {}) {
 
   apply(options)
 
-  // Reapply on route change for reactive usage
+  // Reapply on route change or when site info finishes loading
   watch(() => route.fullPath, () => apply(options))
+  watch(() => siteInfo.siteName, () => apply(options))
 
   return { apply }
 }

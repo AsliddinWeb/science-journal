@@ -8,6 +8,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppSpinner from '@/components/ui/AppSpinner.vue'
 import { THEMES, DEFAULT_THEME_ID } from '@/theme/themes'
 import { useSiteThemeStore } from '@/stores/siteTheme'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -18,11 +19,16 @@ const uploading = ref(false)
 const langTab = ref<'uz' | 'ru' | 'en'>('uz')
 
 const siteTheme = useSiteThemeStore()
+const siteInfo = useSiteInfoStore()
 
 const uploadingVideo = ref(false)
 const uploadingPoster = ref(false)
+const uploadingLogo = ref(false)
 
 const form = ref({
+  site_logo_url: '',
+  site_name: { uz: '', ru: '', en: '' },
+  site_tagline: { uz: '', ru: '', en: '' },
   hero_title: { uz: '', ru: '', en: '' },
   hero_subtitle: { uz: '', ru: '', en: '' },
   hero_issn: '',
@@ -58,6 +64,9 @@ onMounted(async () => {
   try {
     const data = await api.get<any>('/api/home-settings')
     form.value = {
+      site_logo_url: data.site_logo_url || '',
+      site_name: data.site_name || { uz: '', ru: '', en: '' },
+      site_tagline: data.site_tagline || { uz: '', ru: '', en: '' },
       hero_title: data.hero_title || { uz: '', ru: '', en: '' },
       hero_subtitle: data.hero_subtitle || { uz: '', ru: '', en: '' },
       hero_issn: data.hero_issn || '',
@@ -88,11 +97,14 @@ async function save() {
     await api.put('/api/home-settings', {
       ...form.value,
       about_image_url: form.value.about_image_url || null,
+      site_logo_url: form.value.site_logo_url || null,
     })
     // Once saved, make the chosen theme the site-wide default — clear any
     // previous localStorage override so other clients pick up the new default.
     try { localStorage.removeItem('site-theme') } catch { /* ignore */ }
     siteTheme.set(form.value.theme)
+    // Refresh site branding so navbar/footer update immediately
+    await siteInfo.load(true)
     toast.success('Saqlandi')
   } catch { toast.error('Xatolik') }
   finally { saving.value = false }
@@ -130,6 +142,20 @@ async function uploadHeroVideo(e: Event) {
   }
 }
 
+async function uploadLogo(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  uploadingLogo.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await api.post<{ s3_key: string }>('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    form.value.site_logo_url = res.s3_key
+    toast.success('Logo yuklandi')
+  } catch { toast.error('Logo yuklanmadi') }
+  finally { uploadingLogo.value = false }
+}
+
 async function uploadHeroPoster(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
@@ -154,6 +180,71 @@ async function uploadHeroPoster(e: Event) {
     <div v-if="loading" class="flex justify-center py-24"><AppSpinner :size="36" class="text-primary-500" /></div>
 
     <div v-else class="space-y-6">
+      <!-- ══ Branding (logo + jurnal nomi) ══ -->
+      <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-1 flex items-center gap-2">
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Logo va jurnal nomi</h2>
+        </div>
+        <p class="mb-4 text-xs text-slate-500 dark:text-slate-400">
+          Logo va jurnal nomi saytning hamma joyida (navbar, footer, SEO, iqtiboslar) shu yerdan olinadi.
+        </p>
+
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-[220px_1fr]">
+          <!-- Logo upload -->
+          <div>
+            <label class="label-base">Logo (yuqorida ko'rinadi)</label>
+            <div class="flex flex-col items-start gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-800/40">
+              <div class="flex h-20 w-full items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-slate-900">
+                <img
+                  v-if="form.site_logo_url"
+                  :src="form.site_logo_url.startsWith('http') || form.site_logo_url.startsWith('/') ? form.site_logo_url : `/api/uploads/${form.site_logo_url}`"
+                  class="max-h-16 w-auto object-contain"
+                />
+                <span v-else class="text-xs text-slate-400">Logo yo'q</span>
+              </div>
+              <div class="flex w-full items-center gap-2">
+                <label class="flex flex-1 cursor-pointer items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700">
+                  <Loader2 v-if="uploadingLogo" :size="14" class="animate-spin" />
+                  <Image v-else :size="14" />
+                  {{ uploadingLogo ? 'Yuklanmoqda...' : 'Logo yuklash' }}
+                  <input type="file" accept="image/*" class="hidden" @change="uploadLogo" />
+                </label>
+                <button
+                  v-if="form.site_logo_url"
+                  type="button"
+                  class="rounded-lg border border-slate-200 p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:border-slate-600"
+                  :title="t('common.delete')"
+                  @click="form.site_logo_url = ''"
+                >
+                  <X :size="14" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Name + tagline -->
+          <div class="space-y-4">
+            <div>
+              <label class="label-base">Jurnal nomi ({{ langTab.toUpperCase() }})</label>
+              <input
+                v-model="form.site_name[langTab]"
+                class="input-base w-full font-serif text-lg"
+                placeholder="masalan: Filologiya va Ijtimoiy fanlar"
+              />
+            </div>
+            <div>
+              <label class="label-base">Tagline — logo tepasida ko'rinadi ({{ langTab.toUpperCase() }})</label>
+              <input
+                v-model="form.site_tagline[langTab]"
+                class="input-base w-full"
+                placeholder="masalan: Ilmiy jurnal"
+              />
+              <p class="mt-1 text-[11px] text-slate-400">Navbar'da jurnal nomidan yuqorida kichik matn sifatida chiqadi (Academicbook ornida).</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ══ Theme picker ══ -->
       <section class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <div class="mb-4 flex items-center gap-2">

@@ -1,22 +1,31 @@
 import type { Article } from '@/types/article'
 import { normalizeKeywords } from '@/utils/truncate'
 
-const SITE_URL = 'https://scientists.uz'
-const PUBLISHER = {
-  '@type': 'Organization',
-  name: 'Science and Innovation Journal',
-  url: SITE_URL,
-  logo: {
-    '@type': 'ImageObject',
-    url: `${SITE_URL}/favicon.svg`,
-  },
+const SITE_URL = typeof window !== 'undefined' ? window.location.origin : ''
+
+interface SiteBrand {
+  siteName: string
+  issn?: string
+  logoUrl?: string
+}
+
+function publisher(brand: SiteBrand) {
+  return {
+    '@type': 'Organization',
+    name: brand.siteName,
+    url: SITE_URL,
+    logo: {
+      '@type': 'ImageObject',
+      url: brand.logoUrl || `${SITE_URL}/favicon.svg`,
+    },
+  }
 }
 
 function isUploaderRole(role?: string): boolean {
   return role === 'superadmin'
 }
 
-export function buildScholarlyArticle(article: Article): object {
+export function buildScholarlyArticle(article: Article, brand: SiteBrand = { siteName: '' }): object {
   const titleEn = (article.title as any)?.en || (article.title as any)?.uz || ''
   const abstractEn = (article.abstract as any)?.en || (article.abstract as any)?.uz || ''
 
@@ -60,7 +69,7 @@ export function buildScholarlyArticle(article: Article): object {
     author: authors,
     datePublished: article.published_date,
     dateModified: article.updated_at,
-    publisher: PUBLISHER,
+    publisher: publisher(brand),
     ...(article.doi ? {
       identifier: { '@type': 'PropertyValue', propertyID: 'DOI', value: article.doi },
       sameAs: `https://doi.org/${article.doi}`,
@@ -77,13 +86,13 @@ export function buildScholarlyArticle(article: Article): object {
           volumeNumber: article.volume.number,
           isPartOf: {
             '@type': 'Periodical',
-            name: 'Science and Innovation',
-            issn: '2181-3337',
+            name: brand.siteName,
+            ...(brand.issn ? { issn: brand.issn } : {}),
           },
         },
       } : {
-        name: 'Science and Innovation',
-        issn: '2181-3337',
+        name: brand.siteName,
+        ...(brand.issn ? { issn: brand.issn } : {}),
       }),
     },
     ...(pageStart ? { pageStart } : {}),
@@ -98,13 +107,12 @@ export function buildScholarlyArticle(article: Article): object {
   }
 }
 
-export function buildWebSite(): object {
+export function buildWebSite(brand: SiteBrand = { siteName: '' }): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Science and Innovation Journal',
+    name: brand.siteName,
     url: SITE_URL,
-    description: 'International scientific journal covering science, technology and innovation.',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -116,22 +124,17 @@ export function buildWebSite(): object {
   }
 }
 
-export function buildOrganization(): object {
+export function buildOrganization(brand: SiteBrand = { siteName: '' }): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Science and Innovation Journal',
+    name: brand.siteName,
     url: SITE_URL,
     logo: {
       '@type': 'ImageObject',
-      url: `${SITE_URL}/favicon.svg`,
+      url: brand.logoUrl || `${SITE_URL}/favicon.svg`,
     },
     sameAs: [SITE_URL],
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'editorial',
-      email: 'editor@scientists.uz',
-    },
     publishingPrinciples: `${SITE_URL}/pages/peer-review`,
   }
 }

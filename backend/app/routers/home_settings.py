@@ -21,6 +21,9 @@ class HomeSettingsRead(BaseModel):
     hero_video_url: Optional[str] = None
     hero_video_poster_url: Optional[str] = None
     hero_video_active: bool = False
+    site_logo_url: Optional[str] = None
+    site_name: dict = {}
+    site_tagline: dict = {}
     about_title: dict
     about_text: dict
     about_image_url: Optional[str] = None
@@ -44,6 +47,9 @@ class HomeSettingsUpdate(BaseModel):
     hero_video_url: Optional[str] = None
     hero_video_poster_url: Optional[str] = None
     hero_video_active: Optional[bool] = None
+    site_logo_url: Optional[str] = None
+    site_name: Optional[dict] = None
+    site_tagline: Optional[dict] = None
     about_title: Optional[dict] = None
     about_text: Optional[dict] = None
     about_image_url: Optional[str] = None

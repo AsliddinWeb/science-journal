@@ -140,3 +140,4 @@ test_*.py
 
 # IDE
 .devcontainer/local-*
+.claude/

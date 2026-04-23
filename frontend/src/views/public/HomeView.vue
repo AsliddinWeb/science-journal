@@ -12,10 +12,7 @@ import ArticleCard from '@/components/article/ArticleCard.vue'
 const { t } = useI18n()
 const localeStore = useLocaleStore()
 
-useSeoMeta({
-  title: 'Science and Innovation Journal',
-  description: 'International scientific journal covering science, technology and innovation. Open access, peer-reviewed.',
-})
+useSeoMeta({})  // title/description from useSiteInfo store defaults
 
 interface HomeSettingsData {
   hero_title: Record<string, string>
@@ -66,8 +63,8 @@ const stats = ref({ total_articles: 0, total_authors: 0, total_downloads: 0, tot
 const loading = ref(true)
 const activeTab = ref<'details' | 'authors' | 'policy'>('details')
 
-const heroTitle = computed(() => hs.value?.hero_title?.[lang.value] || hs.value?.hero_title?.uz || t('home.hero_title'))
-const heroSubtitle = computed(() => hs.value?.hero_subtitle?.[lang.value] || hs.value?.hero_subtitle?.uz || t('home.hero_subtitle'))
+const heroTitle = computed(() => hs.value?.hero_title?.[lang.value] || hs.value?.hero_title?.uz || '')
+const heroSubtitle = computed(() => hs.value?.hero_subtitle?.[lang.value] || hs.value?.hero_subtitle?.uz || '')
 const aboutTitle = computed(() => hs.value?.about_title?.[lang.value] || hs.value?.about_title?.uz || t('nav.about_journal'))
 const aboutText = computed(() => hs.value?.about_text?.[lang.value] || hs.value?.about_text?.uz || '')
 const ctaTitle = computed(() => hs.value?.cta_title?.[lang.value] || hs.value?.cta_title?.uz || t('home.submit_cta_title'))
@@ -166,10 +163,17 @@ const statItems = computed(() => [
           <span class="inline-block rounded-full border border-primary-400/40 bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-300">
             {{ t('home.hero_badge') }}
           </span>
-          <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
-            {{ heroTitle }}
-          </h1>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+          <template v-if="loading">
+            <div class="skeleton mt-4 h-9 w-3/4 rounded-lg" />
+            <div class="skeleton mt-3 h-4 w-full rounded" />
+            <div class="skeleton mt-2 h-4 w-5/6 rounded" />
+          </template>
+          <template v-else>
+            <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
+              {{ heroTitle }}
+            </h1>
+            <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+          </template>
         </div>
 
         <!-- Stats bar -->
@@ -179,7 +183,8 @@ const statItems = computed(() => [
             :key="stat.label"
             class="bg-journal-800/40 p-4 text-center"
           >
-            <div class="font-serif text-2xl font-bold text-primary-200">{{ stat.value.toLocaleString() }}</div>
+            <div v-if="loading" class="skeleton mx-auto h-7 w-12 rounded" />
+            <div v-else class="font-serif text-2xl font-bold text-primary-200">{{ stat.value.toLocaleString() }}</div>
             <div class="mt-1 text-[11px] uppercase tracking-wider text-slate-400">{{ stat.label }}</div>
           </div>
         </div>
@@ -197,10 +202,17 @@ const statItems = computed(() => [
           <span class="inline-block rounded-full border border-primary-400/40 bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-300">
             {{ t('home.hero_badge') }}
           </span>
-          <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
-            {{ heroTitle }}
-          </h1>
-          <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+          <template v-if="loading">
+            <div class="skeleton mt-4 h-9 w-3/4 rounded-lg" />
+            <div class="skeleton mt-3 h-4 w-full rounded" />
+            <div class="skeleton mt-2 h-4 w-5/6 rounded" />
+          </template>
+          <template v-else>
+            <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
+              {{ heroTitle }}
+            </h1>
+            <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+          </template>
         </div>
 
         <div class="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm sm:grid-cols-4">
@@ -209,7 +221,8 @@ const statItems = computed(() => [
             :key="stat.label"
             class="bg-journal-800/40 p-4 text-center"
           >
-            <div class="font-serif text-2xl font-bold text-primary-200">{{ stat.value.toLocaleString() }}</div>
+            <div v-if="loading" class="skeleton mx-auto h-7 w-12 rounded" />
+            <div v-else class="font-serif text-2xl font-bold text-primary-200">{{ stat.value.toLocaleString() }}</div>
             <div class="mt-1 text-[11px] uppercase tracking-wider text-slate-400">{{ stat.label }}</div>
           </div>
         </div>

@@ -4,10 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { BookOpen } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 import { useToast } from '@/composables/useToast'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const { t } = useI18n()
+const siteInfo = useSiteInfoStore()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -43,11 +45,17 @@ async function handleSubmit() {
       <!-- Logo -->
       <div class="mb-8 text-center">
         <RouterLink to="/" class="inline-flex items-center gap-2.5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
+          <img
+            v-if="siteInfo.logoUrl"
+            :src="siteInfo.logoUrl"
+            :alt="siteInfo.siteName"
+            class="h-10 w-auto max-w-[120px] object-contain"
+          />
+          <div v-else class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
             <BookOpen :size="20" class="text-white" />
           </div>
           <span class="font-serif text-xl font-bold text-slate-900 dark:text-white">
-            Science & Innovation
+            {{ siteInfo.siteName }}
           </span>
         </RouterLink>
       </div>

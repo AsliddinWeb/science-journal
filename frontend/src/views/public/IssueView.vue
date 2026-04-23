@@ -48,9 +48,8 @@ async function load() {
     if (volumeData && issue.value) {
       applySeo({
         title: `Vol. ${volumeData.number}, Issue ${issue.value.number} (${volumeData.year})`,
-        description: `Browse articles in Volume ${volumeData.number}, Issue ${issue.value.number} of Science and Innovation Journal.`,
-        ogUrl: `https://scientists.uz/archive/${volumeData.id}/issues/${issue.value.id}`,
-        canonical: `https://scientists.uz/archive/${volumeData.id}/issues/${issue.value.id}`,
+        ogUrl: `${window.location.origin}/archive/${volumeData.id}/issues/${issue.value.id}`,
+        canonical: `${window.location.origin}/archive/${volumeData.id}/issues/${issue.value.id}`,
       })
     }
   } catch {

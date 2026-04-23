@@ -4,8 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { BookOpen, ArrowRight } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useLocaleStore } from '@/stores/locale'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 
 const { t } = useI18n()
+const siteInfo = useSiteInfoStore()
 
 interface HomeSettings {
   hero_title: Record<string, string>
@@ -22,7 +24,7 @@ const hs = ref<HomeSettings | null>(null)
 const indexing = ref<IndexingItem[]>([])
 
 const lang = computed(() => localeStore.current)
-const journalTitle = computed(() => hs.value?.hero_title?.[lang.value] || hs.value?.hero_title?.uz || "Fan va Innovatsiya")
+const journalTitle = computed(() => siteInfo.siteName)
 const coverImage = computed(() => {
   if (!hs.value?.about_image_url) return null
   return hs.value.about_image_url.startsWith('/') ? hs.value.about_image_url : `/api/uploads/${hs.value.about_image_url}`
@@ -51,8 +53,9 @@ function resolveLogo(url?: string) {
     <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <!-- Cover image -->
       <div class="aspect-[3/4] bg-gradient-to-br from-primary-600 to-primary-800">
+        <div v-if="!siteInfo.loaded" class="skeleton h-full w-full rounded-none" />
         <img
-          v-if="coverImage"
+          v-else-if="coverImage"
           :src="coverImage"
           :alt="journalTitle"
           class="h-full w-full object-cover"

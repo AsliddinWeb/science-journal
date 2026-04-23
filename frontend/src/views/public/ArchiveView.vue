@@ -12,9 +12,8 @@ const { t } = useI18n()
 
 useSeoMeta({
   title: t('nav.archive') || 'Archive',
-  description: 'Browse all volumes and issues of Science and Innovation Journal.',
-  canonical: 'https://scientists.uz/archive',
-  ogUrl: 'https://scientists.uz/archive',
+  canonical: `${window.location.origin}/archive`,
+  ogUrl: `${window.location.origin}/archive`,
 })
 const volumes = ref<Volume[]>([])
 const loading = ref(true)

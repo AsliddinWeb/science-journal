@@ -19,11 +19,13 @@ import PdfPreview from '@/components/ui/PdfPreview.vue'
 import { useSeoMeta, applyCitationMeta } from '@/composables/useSeoMeta'
 import { useJsonLd } from '@/composables/useJsonLd'
 import { buildScholarlyArticle, buildBreadcrumb } from '@/utils/jsonld'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const localeStore = useLocaleStore()
+const siteInfo = useSiteInfoStore()
 
 interface HomeSettingsData {
   hero_title: Record<string, string>
@@ -114,12 +116,13 @@ function applyAllMeta() {
     description: abstractEn.slice(0, 160),
     keywords: kwList.join(', '),
     ogImage: `/api/og-image/${a.id}`,
-    ogUrl: `https://scientists.uz/articles/${a.id}`,
-    canonical: `https://scientists.uz/articles/${a.id}`,
+    ogUrl: `${window.location.origin}/articles/${a.id}`,
+    canonical: `${window.location.origin}/articles/${a.id}`,
     type: 'article',
   })
+  const brand = { siteName: siteInfo.siteName, issn: siteInfo.issn, logoUrl: siteInfo.logoUrl }
   injectLd([
-    buildScholarlyArticle(a),
+    buildScholarlyArticle(a, brand),
     buildBreadcrumb([
       { name: 'Home', url: '/' },
       { name: 'Articles', url: '/articles' },
@@ -127,9 +130,8 @@ function applyAllMeta() {
     ]),
   ])
 
-  const hs = homeSettings.value
-  const journalTitle = hs?.hero_title?.en || hs?.hero_title?.uz || hs?.hero_title?.ru || 'Science and Innovation'
-  const issn = hs?.issn_online || hs?.issn_print || undefined
+  const journalTitle = siteInfo.siteName
+  const issn = siteInfo.issn || undefined
 
   const authorNames = authors.value.map(au => toScholarName(au.fullName))
 
@@ -250,15 +252,14 @@ const citationText = computed(() => {
 
   const articleTitle = (a.title as any)?.en || (a.title as any)?.uz || 'Untitled'
   const year = a.published_date ? new Date(a.published_date).getFullYear() : ''
-  const hs = homeSettings.value
-  const journalName = hs?.hero_title?.en || hs?.hero_title?.uz || 'Science and Innovation'
+  const journalName = siteInfo.siteName
   const volIss = a.volume
     ? `${a.volume.number}${a.issue ? `(${a.issue.number})` : ''}`
     : ''
   const pages = a.pages || ''
   const doi = a.doi ? `https://doi.org/${a.doi}` : ''
 
-  const articleUrl = typeof window !== 'undefined' ? window.location.href : `https://scientists.uz/articles/${a.id}`
+  const articleUrl = typeof window !== 'undefined' ? window.location.href : `/articles/${a.id}`
   let citation = ''
   if (authorStr) citation += `${authorStr} `
   if (year) citation += `(${year}). `

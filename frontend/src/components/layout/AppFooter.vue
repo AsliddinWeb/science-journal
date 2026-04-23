@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { BookOpen, ExternalLink } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 
 const { t } = useI18n()
+const siteInfo = useSiteInfoStore()
 const currentYear = new Date().getFullYear()
 
 const indexingLogos = [
@@ -45,12 +47,24 @@ const indexingLogos = [
         <!-- Brand -->
         <div class="sm:col-span-2 lg:col-span-1">
           <RouterLink to="/" class="flex items-center gap-2.5">
-            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500">
-              <BookOpen :size="18" class="text-white" />
-            </div>
-            <span class="font-serif text-lg font-semibold text-primary-200">
-              Science & Innovation
-            </span>
+            <template v-if="!siteInfo.loaded">
+              <div class="skeleton h-9 w-9 rounded-xl" />
+              <div class="skeleton h-5 w-32 rounded" />
+            </template>
+            <template v-else>
+              <img
+                v-if="siteInfo.logoUrl"
+                :src="siteInfo.logoUrl"
+                :alt="siteInfo.siteName"
+                class="h-9 w-auto max-w-[100px] object-contain"
+              />
+              <div v-else class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500">
+                <BookOpen :size="18" class="text-white" />
+              </div>
+              <span class="font-serif text-lg font-semibold text-primary-200">
+                {{ siteInfo.siteName }}
+              </span>
+            </template>
           </RouterLink>
           <p class="mt-4 text-sm leading-relaxed text-slate-400">
             {{ t('footer.description') }}
@@ -137,7 +151,7 @@ const indexingLogos = [
       <!-- Bottom bar -->
       <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t border-journal-800 pt-8 sm:flex-row">
         <p class="text-sm text-slate-500">
-          &copy; {{ currentYear }} Science and Innovation Journal. {{ t('footer.rights') }}
+          &copy; {{ currentYear }} {{ siteInfo.siteName }}. {{ t('footer.rights') }}
         </p>
         <div class="flex items-center gap-4 text-xs text-slate-500">
           <RouterLink to="/pages/privacy" class="transition-colors hover:text-primary-300">Privacy</RouterLink>

@@ -23,6 +23,11 @@ class HomeSettings(Base):
     hero_video_poster_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     hero_video_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    # Site branding — logo image + site name (multilingual) shown in navbar/footer/SEO
+    site_logo_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    site_name: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    site_tagline: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+
     # About section (inside hero)
     about_title: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     about_text: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)

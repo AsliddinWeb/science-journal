@@ -325,9 +325,10 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach(async (to, _from, next) => {
-  // Set page title
+  // Set page title. The actual journal name is appended later by useSeoMeta
+  // once the site-info store is loaded; fall back to the route title or generic brand.
   const title = to.meta.title as string | undefined
-  document.title = title ? `${title} | Science and Innovation Journal` : 'Science and Innovation Journal'
+  document.title = title || 'Academicbook'
 
   const token = localStorage.getItem('access_token')
   const isAuthenticated = !!token

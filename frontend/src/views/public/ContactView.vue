@@ -9,9 +9,8 @@ const { t } = useI18n()
 
 useSeoMeta({
   title: t('nav.contact'),
-  description: 'Contact the editorial team of Science and Innovation Journal.',
-  canonical: 'https://scientists.uz/contact',
-  ogUrl: 'https://scientists.uz/contact',
+  canonical: `${window.location.origin}/contact`,
+  ogUrl: `${window.location.origin}/contact`,
 })
 
 const form = reactive({

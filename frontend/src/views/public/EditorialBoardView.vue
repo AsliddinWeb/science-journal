@@ -11,9 +11,8 @@ const { t } = useI18n()
 
 useSeoMeta({
   title: t('nav.editorial'),
-  description: 'Meet the distinguished editorial board members of Science and Innovation Journal.',
-  canonical: 'https://scientists.uz/editorial-board',
-  ogUrl: 'https://scientists.uz/editorial-board',
+  canonical: `${window.location.origin}/editorial-board`,
+  ogUrl: `${window.location.origin}/editorial-board`,
 })
 const members = ref<EditorialMember[]>([])
 const loading = ref(true)

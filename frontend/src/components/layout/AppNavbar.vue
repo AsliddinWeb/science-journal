@@ -6,8 +6,10 @@ import { useI18n } from 'vue-i18n'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import LangSwitcher from '@/components/ui/LangSwitcher.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 
 const { t } = useI18n()
+const siteInfo = useSiteInfoStore()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -84,16 +86,37 @@ const isActive = (path: string) => route.path.startsWith(path)
     <nav class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
       <div class="flex h-20 items-center justify-between gap-4">
 
-        <!-- Logo -->
+        <!-- Logo + journal name (configurable via admin home-settings) -->
         <RouterLink to="/" class="flex items-center gap-3 shrink-0">
-          <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-500 shadow-md">
-            <BookOpen :size="22" class="text-white" />
+          <div class="flex shrink-0 items-center justify-center">
+            <template v-if="!siteInfo.loaded">
+              <div class="skeleton h-11 w-11 rounded-lg" />
+            </template>
+            <template v-else>
+              <img
+                v-if="siteInfo.logoUrl"
+                :src="siteInfo.logoUrl"
+                :alt="siteInfo.siteName"
+                class="h-12 w-auto max-w-[140px] object-contain"
+              />
+              <div v-else class="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-500 shadow-md">
+                <BookOpen :size="22" class="text-white" />
+              </div>
+            </template>
           </div>
-          <div class="hidden sm:block">
-            <span class="block font-serif text-xl font-bold text-primary-200 leading-tight">
-              Science & Innovation
-            </span>
-            <span class="block text-[10px] text-primary-300/70 tracking-widest uppercase">Scientific Journal</span>
+          <div class="hidden sm:flex sm:flex-col sm:leading-tight">
+            <template v-if="!siteInfo.loaded">
+              <div class="skeleton h-3 w-20 rounded" />
+              <div class="skeleton mt-1.5 h-4 w-40 rounded" />
+            </template>
+            <template v-else>
+              <span v-if="siteInfo.tagline" class="text-[10px] font-semibold uppercase tracking-widest text-primary-300/80">
+                {{ siteInfo.tagline }}
+              </span>
+              <span class="font-serif text-base font-bold text-primary-100 sm:text-lg">
+                {{ siteInfo.siteName }}
+              </span>
+            </template>
           </div>
         </RouterLink>
 
