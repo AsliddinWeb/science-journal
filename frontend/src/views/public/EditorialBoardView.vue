@@ -22,7 +22,7 @@ async function load() {
   loading.value = true
   error.value = false
   try {
-    members.value = await api.get<EditorialMember[]>('/api/editorial')
+    members.value = await api.get<EditorialMember[]>('/api/editorial/board')
   } catch {
     error.value = true
   } finally {
