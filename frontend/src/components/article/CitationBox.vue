@@ -4,21 +4,20 @@ import { useI18n } from 'vue-i18n'
 import { Copy, Check } from 'lucide-vue-next'
 import type { Article } from '@/types/article'
 import { useLocaleStore } from '@/stores/locale'
-import { useSiteInfoStore } from '@/stores/siteInfo'
 import { getLocalizedField } from '@/utils/truncate'
 
 const props = defineProps<{ article: Article }>()
 
 const { t } = useI18n()
 const localeStore = useLocaleStore()
-const siteInfo = useSiteInfoStore()
 
 type Tab = 'apa' | 'mla' | 'bibtex'
 const activeTab = ref<Tab>('apa')
 const copied = ref(false)
 
+// Title in the article's own primary language — independent of UI locale.
 const title = computed(() =>
-  getLocalizedField(props.article.title, localeStore.current, 'Untitled')
+  getLocalizedField(props.article.title, props.article.language, 'Untitled')
 )
 
 const authors = computed(() => {
@@ -64,21 +63,21 @@ function scholarName(fullName: string): string {
 const apa = computed(() => {
   const authorStr = authors.value.map(scholarName).join(', & ')
   const doi = props.article.doi ? ` https://doi.org/${props.article.doi}` : ''
-  return `${authorStr} (${year.value}). ${title.value}. *${siteInfo.siteName}*, ${props.article.volume_id ? '' : ''}.${doi}`
+  return `${authorStr} (${year.value}). ${title.value}.${doi}`
 })
 
 const mla = computed(() => {
   const [first, ...rest] = authors.value
   const authorStr = rest.length ? `${first}, et al.` : first
   const doi = props.article.doi ? ` doi:${props.article.doi}` : ''
-  return `${authorStr}. "${title.value}." *${siteInfo.siteName}*, ${year.value}.${doi}`
+  return `${authorStr}. "${title.value}." ${year.value}.${doi}`
 })
 
 const bibtex = computed(() => {
   const key = (authors.value[0]?.split(' ').pop() ?? 'Author') + year.value
   const authorStr = authors.value.join(' and ')
   const doi = props.article.doi ? `\n  doi = {${props.article.doi}},` : ''
-  return `@article{${key},\n  author = {${authorStr}},\n  title = {${title.value}},\n  journal = {${siteInfo.siteName}},\n  year = {${year.value}},${doi}\n}`
+  return `@article{${key},\n  author = {${authorStr}},\n  title = {${title.value}},\n  year = {${year.value}},${doi}\n}`
 })
 
 const currentCitation = computed(() => {

@@ -209,8 +209,18 @@ watch(homeSettings, applyAllMeta)
 
 const articleId = computed(() => route.params.id as string)
 
-const title = computed(() => article.value ? getLocalizedField(article.value.title, localeStore.current, '') : '')
-const abstract = computed(() => article.value ? getLocalizedField(article.value.abstract, localeStore.current, '') : '')
+// Pick the version matching the article's own primary language first,
+// falling back to en → uz → ru. Independent of the reader's UI locale.
+const title = computed(() => {
+  const a = article.value
+  if (!a) return ''
+  return getLocalizedField(a.title, a.language, '')
+})
+const abstract = computed(() => {
+  const a = article.value
+  if (!a) return ''
+  return getLocalizedField(a.abstract, a.language, '')
+})
 const keywords = computed(() => normalizeKeywords(article.value?.keywords, localeStore.current))
 const references = computed(() => normalizeKeywords(article.value?.references as any, localeStore.current))
 const referencesExpanded = ref(false)
@@ -282,10 +292,9 @@ const citationText = computed(() => {
 
   const authorStr = authors.value.map(au => toScholarName(au.fullName)).join(', ')
 
-  // Use the title in the reader's locale (falls back to en → uz → ru).
-  const articleTitle = getLocalizedField(a.title as any, localeStore.current, 'Untitled')
+  // Title in the article's own primary language — not the reader's locale.
+  const articleTitle = getLocalizedField(a.title as any, a.language, 'Untitled')
   const year = a.published_date ? new Date(a.published_date).getFullYear() : ''
-  const journalName = siteInfo.siteName
   const volIss = a.volume
     ? `${a.volume.number}${a.issue ? `(${a.issue.number})` : ''}`
     : ''
@@ -293,14 +302,13 @@ const citationText = computed(() => {
   const doi = a.doi ? `https://doi.org/${a.doi}` : ''
   const articleUrl = typeof window !== 'undefined' ? window.location.href : `/articles/${a.id}`
 
-  // APA-style: Authors (Year). Title. Journal, Vol(Issue), Pages. DOI / URL
+  // Format: Authors (Year). Title. Vol(Issue), Pages. DOI \n URL
   const parts: string[] = []
   if (authorStr) parts.push(authorStr)
   parts.push(`(${year}).`)
   parts.push(`${articleTitle}.`)
 
   const pubBits: string[] = []
-  if (journalName) pubBits.push(journalName)
   if (volIss) pubBits.push(volIss)
   if (pages) pubBits.push(pages)
   if (pubBits.length) parts.push(pubBits.join(', ') + '.')
