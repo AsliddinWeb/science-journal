@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { BadgeCheck, Calendar, Eye, Download, BookOpen } from 'lucide-vue-next'
+import { BadgeCheck, Calendar, Eye, Download, BookOpen, Hash } from 'lucide-vue-next'
 import type { Article } from '@/types/article'
 import { useLocaleStore } from '@/stores/locale'
 import { getLocalizedField } from '@/utils/truncate'
@@ -102,6 +102,14 @@ const downloadHref = computed(() => {
         >
           <BookOpen :size="11" />
           {{ volIssueLabel }}
+        </span>
+
+        <span
+          v-if="article.pages"
+          class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+        >
+          <Hash :size="11" />
+          {{ article.pages }}
         </span>
 
         <RouterLink

@@ -82,10 +82,18 @@ class UserProfileUpdate(BaseModel):
         return v.strip() if v else v
 
 
-class UserRead(UserBase):
+class UserRead(BaseModel):
+    """Server response schema. Email is plain str (not EmailStr) to avoid
+    output-validation failures on legacy rows that may contain non-email
+    text. Strict validation still happens on Create/Update inputs."""
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    email: str
+    full_name: str
+    affiliation: Optional[str] = None
+    country: Optional[str] = None
+    orcid_id: Optional[str] = None
     role: UserRole
     avatar_url: Optional[str] = None
     is_active: bool
