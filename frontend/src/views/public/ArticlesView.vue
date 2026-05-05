@@ -2,10 +2,13 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { SlidersHorizontal, X, Search as SearchIcon, AlertCircle, RefreshCw, Globe, BookOpen as BookOpenIcon, Calendar as CalendarIcon, ArrowUpDown } from 'lucide-vue-next'
+import { SlidersHorizontal, X, Search as SearchIcon, AlertCircle, RefreshCw, Globe, BookOpen as BookOpenIcon, Calendar as CalendarIcon, ArrowUpDown, Tag as TagIcon } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
+import { useLocaleStore } from '@/stores/locale'
 import type { Article, PaginatedResponse } from '@/types/article'
 import type { Volume } from '@/types/volume'
+
+interface Category { id: string; slug: string; name_uz: string; name_ru: string; name_en: string }
 import ArticleCard from '@/components/article/ArticleCard.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
 import SkeletonText from '@/components/ui/SkeletonText.vue'
@@ -22,8 +25,10 @@ useSeoMeta({
 const route = useRoute()
 const router = useRouter()
 
+const localeStore = useLocaleStore()
 const articles = ref<Article[]>([])
 const volumes = ref<Volume[]>([])
+const categories = ref<Category[]>([])
 const total = ref(0)
 const pages = ref(1)
 const loading = ref(false)
@@ -35,9 +40,14 @@ const filters = reactive({
   language: (route.query.language as string) ?? '',
   volume_id: (route.query.volume as string) ?? '',
   year: (route.query.year as string) ?? '',
+  category: (route.query.category as string) ?? '',
   sort: (route.query.sort as string) ?? 'newest',
   page: Number(route.query.page) || 1,
 })
+
+function categoryName(c: Category) {
+  return c[`name_${localeStore.current}` as 'name_uz' | 'name_ru' | 'name_en'] || c.name_uz || c.name_en
+}
 
 const PAGE_SIZE = 10
 
@@ -48,7 +58,7 @@ const sortOptions = computed(() => [
 ])
 
 const hasActiveFilters = computed(() =>
-  !!(filters.search || filters.language || filters.volume_id || filters.year || filters.sort !== 'newest')
+  !!(filters.search || filters.language || filters.volume_id || filters.year || filters.category || filters.sort !== 'newest')
 )
 
 const yearOptions = computed(() => {
@@ -68,6 +78,7 @@ async function fetchArticles() {
     if (filters.language) params.set('language', filters.language)
     if (filters.volume_id) params.set('volume_id', filters.volume_id)
     if (filters.year) params.set('year', filters.year)
+    if (filters.category) params.set('category', filters.category)
     if (filters.sort === 'oldest') params.set('sort', 'published_date_asc')
     else if (filters.sort === 'downloads') params.set('sort', 'download_count_desc')
     else params.set('sort', 'published_date_desc')
@@ -89,7 +100,13 @@ async function fetchVolumes() {
   } catch {}
 }
 
-onMounted(() => { fetchVolumes(); fetchArticles() })
+async function fetchCategories() {
+  try {
+    categories.value = await api.get<Category[]>('/api/categories')
+  } catch {}
+}
+
+onMounted(() => { fetchVolumes(); fetchCategories(); fetchArticles() })
 
 watch(
   () => ({ ...filters }),
@@ -100,6 +117,7 @@ watch(
         ...(filters.language && { language: filters.language }),
         ...(filters.volume_id && { volume: filters.volume_id }),
         ...(filters.year && { year: filters.year }),
+        ...(filters.category && { category: filters.category }),
         ...(filters.sort !== 'newest' && { sort: filters.sort }),
         ...(filters.page > 1 && { page: String(filters.page) }),
       },
@@ -114,9 +132,20 @@ function clearFilters() {
   filters.language = ''
   filters.volume_id = ''
   filters.year = ''
+  filters.category = ''
   filters.sort = 'newest'
   filters.page = 1
 }
+
+watch(() => route.query.category, (newCat) => {
+  if (typeof newCat === 'string' && newCat !== filters.category) {
+    filters.category = newCat
+    filters.page = 1
+  } else if (!newCat && filters.category) {
+    filters.category = ''
+    filters.page = 1
+  }
+})
 
 function onSearchInput(e: Event) {
   filters.search = (e.target as HTMLInputElement).value
@@ -217,6 +246,38 @@ const langOptions = [
                     Vol. {{ vol.number }} ({{ vol.year }})
                   </option>
                 </select>
+              </div>
+
+              <!-- Category filter -->
+              <div v-if="categories.length" class="px-4 py-4">
+                <p class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-journal-700 dark:text-primary-300">
+                  <TagIcon :size="11" />
+                  Kategoriya
+                </p>
+                <div class="flex flex-col gap-1">
+                  <button
+                    class="flex items-center justify-between rounded-md px-3 py-1.5 text-left text-xs font-medium transition"
+                    :class="!filters.category
+                      ? 'bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300'
+                      : 'text-slate-600 hover:bg-stone-50 dark:text-slate-400 dark:hover:bg-slate-700'"
+                    @click="() => { filters.category = ''; filters.page = 1 }"
+                  >
+                    <span>{{ t('common.all') }}</span>
+                    <span v-if="!filters.category" class="text-primary-600 dark:text-primary-400">✓</span>
+                  </button>
+                  <button
+                    v-for="c in categories"
+                    :key="c.id"
+                    class="flex items-center justify-between rounded-md px-3 py-1.5 text-left text-xs font-medium transition"
+                    :class="filters.category === c.slug
+                      ? 'bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300'
+                      : 'text-slate-600 hover:bg-stone-50 dark:text-slate-400 dark:hover:bg-slate-700'"
+                    @click="() => { filters.category = c.slug; filters.page = 1 }"
+                  >
+                    <span class="truncate">{{ categoryName(c) }}</span>
+                    <span v-if="filters.category === c.slug" class="text-primary-600 dark:text-primary-400">✓</span>
+                  </button>
+                </div>
               </div>
 
               <!-- Year filter -->

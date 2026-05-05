@@ -20,6 +20,15 @@ class ArticleIssueBrief(BaseModel):
     published_date: Optional[date] = None
 
 
+class ArticleCategoryBrief(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    slug: str
+    name_uz: str
+    name_ru: str
+    name_en: str
+
+
 class ArticleAuthorCreate(BaseModel):
     user_id: Optional[UUID] = None
     guest_name: Optional[str] = None
@@ -188,7 +197,7 @@ class ArticleRead(BaseModel):
     volume_id: Optional[UUID] = None
     issue_id: Optional[UUID] = None
     category_id: Optional[UUID] = None
-    author_id: UUID
+    author_id: Optional[UUID] = None
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
     cover_image_url: Optional[str] = None
@@ -207,6 +216,7 @@ class ArticleRead(BaseModel):
     co_authors: List[ArticleAuthorRead] = []
     volume: Optional[ArticleVolumeBrief] = None
     issue: Optional[ArticleIssueBrief] = None
+    category: Optional[ArticleCategoryBrief] = None
 
 
 class ArticleStatusDetail(ArticleRead):
@@ -240,3 +250,4 @@ class ArticleListItem(BaseModel):
     co_authors: List[ArticleAuthorRead] = []
     volume: Optional[ArticleVolumeBrief] = None
     issue: Optional[ArticleIssueBrief] = None
+    category: Optional[ArticleCategoryBrief] = None

@@ -61,6 +61,7 @@ export interface Article {
   co_authors: ArticleAuthor[]
   volume?: { id: string; number: number; year: number }
   issue?: { id: string; number: number; published_date?: string }
+  category?: { id: string; slug: string; name_uz: string; name_ru: string; name_en: string }
 }
 
 export interface ArticleListItem extends Omit<Article, 'reviews'> {}

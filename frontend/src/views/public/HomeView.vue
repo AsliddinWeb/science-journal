@@ -83,18 +83,26 @@ const articleAuthors = (a: Article) => {
   return [main, ...co].join(', ')
 }
 
+interface Category { id: string; slug: string; name_uz: string; name_ru: string; name_en: string }
+const categories = ref<Category[]>([])
+function categoryName(c: Category) {
+  return c[`name_${lang.value}` as 'name_uz' | 'name_ru' | 'name_en'] || c.name_uz || c.name_en
+}
+
 onMounted(async () => {
   try {
-    const [articlesData, volumesData, homeSettings, statsData] = await Promise.all([
+    const [articlesData, volumesData, homeSettings, statsData, categoriesData] = await Promise.all([
       api.get<PaginatedResponse<Article>>('/api/articles?limit=6&status=published'),
       api.get<Volume[]>('/api/volumes'),
       api.get<HomeSettingsData>('/api/home-settings').catch(() => null),
       api.get<typeof stats.value>('/api/stats/overview').catch(() => null),
+      api.get<Category[]>('/api/categories').catch(() => []),
     ])
     latestArticles.value = articlesData.items
     currentVolume.value = volumesData.find((v) => v.is_current) ?? volumesData[0] ?? null
     hs.value = homeSettings
     if (statsData) stats.value = statsData
+    categories.value = categoriesData ?? []
   } catch { /* ignore */ }
   finally { loading.value = false }
 })
@@ -314,6 +322,21 @@ const statItems = computed(() => [
             <h3 class="font-serif text-base font-bold text-journal-800 dark:text-primary-300">{{ t('home.card_plagiarism') }}</h3>
           </RouterLink>
         </div>
+      </div>
+    </section>
+
+    <!-- Categories shortcut row -->
+    <section v-if="categories.length" class="rounded-2xl border border-stone-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+      <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Kategoriyalar</h3>
+      <div class="flex flex-wrap gap-2">
+        <RouterLink
+          v-for="c in categories"
+          :key="c.id"
+          :to="{ path: '/articles', query: { category: c.slug } }"
+          class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1.5 text-sm text-primary-700 transition hover:bg-primary-100 dark:bg-primary-950/40 dark:text-primary-300 dark:hover:bg-primary-950/60"
+        >
+          {{ categoryName(c) }}
+        </RouterLink>
       </div>
     </section>
 

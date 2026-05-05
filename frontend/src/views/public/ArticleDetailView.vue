@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import {
   Download, Share2, Copy, Check, Eye, ChevronRight, FileText,
   BookOpen, Tag, Calendar, Globe, Hash, AlertCircle, RefreshCw,
-  BadgeCheck, Send, Users,
+  Send, Users,
 } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useLocaleStore } from '@/stores/locale'
@@ -25,6 +25,11 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const localeStore = useLocaleStore()
+
+function categoryName(c: { name_uz: string; name_ru: string; name_en: string } | undefined): string {
+  if (!c) return ''
+  return c[`name_${localeStore.current}` as 'name_uz' | 'name_ru' | 'name_en'] || c.name_uz || c.name_en
+}
 const siteInfo = useSiteInfoStore()
 
 interface HomeSettingsData {
@@ -370,8 +375,15 @@ const pdfHref = computed(() => {
         <div class="h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-800" />
 
         <div class="px-6 pt-7 pb-6 sm:px-10 sm:pt-10 sm:pb-8">
-          <!-- Top pills: article type + language -->
+          <!-- Top pills: category + article type + language -->
           <div class="mb-4 flex flex-wrap items-center gap-2">
+            <RouterLink
+              v-if="article.category"
+              :to="{ path: '/articles', query: { category: article.category.slug } }"
+              class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700 transition hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-300"
+            >
+              <Tag :size="11" />{{ categoryName(article.category) }}
+            </RouterLink>
             <span
               v-if="article.article_type"
               class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-primary-700 dark:bg-primary-950/40 dark:text-primary-300"

@@ -223,6 +223,7 @@ async def admin_list_articles(
         selectinload(Article.author),
         selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
         selectinload(Article.volume),
+            selectinload(Article.category),
         selectinload(Article.issue),
     )
 
@@ -274,6 +275,7 @@ async def export_articles(
         selectinload(Article.author),
         selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
         selectinload(Article.volume),
+            selectinload(Article.category),
         selectinload(Article.issue),
         selectinload(Article.category),
     )
@@ -371,6 +373,7 @@ async def admin_create_article(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article.id)
@@ -394,6 +397,7 @@ async def admin_update_article(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -444,6 +448,7 @@ async def admin_update_article(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -465,6 +470,7 @@ async def update_article_status(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -554,6 +560,7 @@ async def assign_doi(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)

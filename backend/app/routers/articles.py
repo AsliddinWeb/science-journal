@@ -43,6 +43,7 @@ async def list_articles(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.status == ArticleStatus.published)
@@ -102,6 +103,7 @@ async def my_articles(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.author_id == current_user.id)
@@ -166,6 +168,7 @@ async def get_article_status(
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.reviews),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -232,6 +235,7 @@ async def get_article(
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.reviews),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -326,6 +330,7 @@ async def create_article(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article.id)
@@ -347,6 +352,7 @@ async def update_article(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -391,6 +397,7 @@ async def submit_revision(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
@@ -530,6 +537,7 @@ async def make_decision(
             selectinload(Article.author),
             selectinload(Article.co_authors).selectinload(ArticleAuthor.user),
             selectinload(Article.volume),
+            selectinload(Article.category),
             selectinload(Article.issue),
         )
         .where(Article.id == article_id)
