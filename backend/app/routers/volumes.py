@@ -54,6 +54,7 @@ async def list_volumes(db: AsyncSession = Depends(get_db)) -> list:
                 "published_date": issue.published_date,
                 "cover_image_url": issue.cover_image_url,
                 "description": issue.description,
+                "full_pdf_url": issue.full_pdf_url,
                 "created_at": issue.created_at,
                 "article_count": article_count,
             })
@@ -88,6 +89,7 @@ async def get_volume(volume_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -
             "published_date": issue.published_date,
             "cover_image_url": issue.cover_image_url,
             "description": issue.description,
+            "full_pdf_url": issue.full_pdf_url,
             "created_at": issue.created_at,
             "article_count": count_result.scalar_one(),
         })
@@ -177,6 +179,7 @@ async def update_volume(
             "published_date": issue.published_date,
             "cover_image_url": issue.cover_image_url,
             "description": issue.description,
+            "full_pdf_url": issue.full_pdf_url,
             "created_at": issue.created_at,
             "article_count": count_result.scalar_one(),
         })
@@ -225,6 +228,7 @@ async def create_issue(
         published_date=data.published_date,
         cover_image_url=data.cover_image_url,
         description=data.description,
+        full_pdf_url=data.full_pdf_url,
     )
     db.add(issue)
     await db.flush()
@@ -236,6 +240,57 @@ async def create_issue(
         "published_date": issue.published_date,
         "cover_image_url": issue.cover_image_url,
         "description": issue.description,
+        "full_pdf_url": issue.full_pdf_url,
         "created_at": issue.created_at,
         "article_count": 0,
     }
+
+
+@router.put("/{volume_id}/issues/{issue_id}", response_model=IssueRead)
+async def update_issue(
+    volume_id: uuid.UUID,
+    issue_id: uuid.UUID,
+    data: IssueUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: object = Depends(require_editor),
+) -> dict:
+    """Update an issue (e.g. attach the combined full-issue PDF)."""
+    result = await db.execute(
+        select(Issue).where(Issue.id == issue_id, Issue.volume_id == volume_id)
+    )
+    issue = result.scalar_one_or_none()
+    if not issue:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(issue, field, value)
+    await db.flush()
+
+    return {
+        "id": issue.id,
+        "volume_id": issue.volume_id,
+        "number": issue.number,
+        "published_date": issue.published_date,
+        "cover_image_url": issue.cover_image_url,
+        "description": issue.description,
+        "full_pdf_url": issue.full_pdf_url,
+        "created_at": issue.created_at,
+        "article_count": 0,
+    }
+
+
+@router.delete("/{volume_id}/issues/{issue_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_issue(
+    volume_id: uuid.UUID,
+    issue_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: object = Depends(require_editor),
+) -> None:
+    """Delete an issue."""
+    result = await db.execute(
+        select(Issue).where(Issue.id == issue_id, Issue.volume_id == volume_id)
+    )
+    issue = result.scalar_one_or_none()
+    if not issue:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
+    await db.delete(issue)

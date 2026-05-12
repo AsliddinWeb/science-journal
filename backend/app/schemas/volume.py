@@ -25,6 +25,7 @@ class IssueCreate(BaseModel):
     published_date: Optional[date] = None
     cover_image_url: Optional[str] = None
     description: Optional[str] = None
+    full_pdf_url: Optional[str] = None
 
 
 class IssueUpdate(BaseModel):
@@ -32,6 +33,7 @@ class IssueUpdate(BaseModel):
     published_date: Optional[date] = None
     cover_image_url: Optional[str] = None
     description: Optional[str] = None
+    full_pdf_url: Optional[str] = None
 
 
 class IssueRead(BaseModel):
@@ -43,6 +45,7 @@ class IssueRead(BaseModel):
     published_date: Optional[date] = None
     cover_image_url: Optional[str] = None
     description: Optional[str] = None
+    full_pdf_url: Optional[str] = None
     created_at: datetime
     article_count: int = 0
 

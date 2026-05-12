@@ -76,6 +76,15 @@ async def list_articles(
         query = query.order_by(Article.published_date.asc())
     elif sort == "downloads":
         query = query.order_by(Article.download_count.desc())
+    elif sort == "pages":
+        # Sort by the leading number in the "pages" field ("82-86" → 82).
+        # Falls back to published_date when pages is null.
+        from sqlalchemy import case, cast, Integer
+        page_start = cast(
+            func.nullif(func.split_part(Article.pages, "-", 1), ""),
+            Integer,
+        )
+        query = query.order_by(page_start.asc().nulls_last(), Article.published_date.desc())
     else:
         query = query.order_by(Article.published_date.desc())
 

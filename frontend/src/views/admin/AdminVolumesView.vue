@@ -127,6 +127,41 @@ function openAssignModal(issueId: string) {
   showAssignModal.value = true
 }
 
+const uploadingPdfId = ref<string | null>(null)
+
+async function uploadIssueFullPdf(issue: Issue, e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  uploadingPdfId.value = issue.id
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await api.post<{ s3_key: string }>('/api/upload/pdf', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    await api.put(`/api/volumes/${(issue as any).volume_id}/issues/${issue.id}`, {
+      full_pdf_url: res.s3_key,
+    })
+    ;(issue as any).full_pdf_url = res.s3_key
+    toast.success('PDF yuklandi')
+  } catch {
+    toast.error('PDF yuklanmadi')
+  } finally {
+    uploadingPdfId.value = null
+  }
+}
+
+async function removeIssueFullPdf(issue: Issue) {
+  try {
+    await api.put(`/api/volumes/${(issue as any).volume_id}/issues/${issue.id}`, {
+      full_pdf_url: null,
+    })
+    ;(issue as any).full_pdf_url = null
+  } catch {
+    toast.error('O\'chirishda xatolik')
+  }
+}
+
 function onAssigned() {
   // Reload issues for current volume
   if (selectedVolumeId.value) {
@@ -260,6 +295,19 @@ function onAssigned() {
               >
                 {{ t('admin.volumes.assignArticles') }}
               </button>
+
+              <!-- Full issue PDF -->
+              <div class="mt-2">
+                <div v-if="(issue as any).full_pdf_url" class="flex items-center gap-2 rounded-md bg-emerald-50 px-2 py-1.5 text-xs dark:bg-emerald-950/30">
+                  <span class="flex-1 truncate font-mono text-emerald-700 dark:text-emerald-300">PDF: {{ ((issue as any).full_pdf_url as string).split('/').pop() }}</span>
+                  <button class="text-red-500 hover:text-red-700" @click="removeIssueFullPdf(issue)">×</button>
+                </div>
+                <label v-else class="flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-xs text-slate-500 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-600">
+                  <span v-if="uploadingPdfId === issue.id">Yuklanmoqda...</span>
+                  <span v-else>+ Sonni to'liq PDF</span>
+                  <input type="file" accept="application/pdf" class="hidden" @change="(e) => uploadIssueFullPdf(issue, e)" />
+                </label>
+              </div>
             </div>
             <div
               v-if="!selectedVolume.issues.length"
