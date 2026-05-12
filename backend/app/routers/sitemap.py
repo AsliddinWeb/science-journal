@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.database import get_db
 from app.models.article import Article, ArticleStatus
 from app.models.volume import Volume, Issue
+from app.models.home_settings import HomeSettings
 from app.config import settings
 from app.services.cache import get_cached, set_cached
 from fastapi import Depends
@@ -15,8 +16,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["sitemap"])
 
 SITE_URL = settings.APP_URL
+# "/" is intentionally omitted — it is a 302 redirect to /{journal_slug}.
 STATIC_PATHS = [
-    ("/", "1.0", "daily"),
     ("/articles", "0.9", "daily"),
     ("/archive", "0.8", "weekly"),
     ("/editorial-board", "0.6", "monthly"),
@@ -59,11 +60,20 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
         )
         articles = articles_result.all()
 
+        # Resolve the journal_slug from home_settings — the actual home URL
+        hs_result = await db.execute(
+            select(HomeSettings.journal_slug).where(HomeSettings.id == "default")
+        )
+        journal_slug = hs_result.scalar_one_or_none() or "academic-book-journal"
+
         lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
             '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
         ]
+
+        # Home (journal landing) — highest priority
+        lines.append(_url_entry(f"{SITE_URL}/{journal_slug}", changefreq="daily", priority="1.0"))
 
         for path, priority, freq in STATIC_PATHS:
             lines.append(_url_entry(f"{SITE_URL}{path}", changefreq=freq, priority=priority))

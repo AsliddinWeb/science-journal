@@ -72,6 +72,14 @@ const routes: RouteRecordRaw[] = [
         name: 'static-page',
         component: () => import('@/views/public/StaticPageView.vue'),
       },
+      // Journal home — admin-configurable slug (e.g. /academic-book-journal).
+      // Must be LAST among children so explicit static paths win the resolver.
+      {
+        path: ':journalSlug',
+        name: 'journal-home',
+        component: () => import('@/views/public/HomeView.vue'),
+        meta: { title: 'Home' },
+      },
     ],
   },
 
@@ -345,9 +353,23 @@ router.beforeEach(async (to, _from, next) => {
   const token = localStorage.getItem('access_token')
   const isAuthenticated = !!token
 
+  // "/" and "/journal-home" → redirect to the admin-configured slug.
+  // Ensure siteInfo is loaded so we know the slug, then permanently redirect.
+  if (to.path === '/' || (to.name === 'journal-home' && false)) {
+    try {
+      const { useSiteInfoStore } = await import('@/stores/siteInfo')
+      const siteInfo = useSiteInfoStore()
+      if (!siteInfo.loaded) await siteInfo.load()
+      const slug = siteInfo.journalSlug || 'academic-book-journal'
+      return next({ path: `/${slug}`, replace: true })
+    } catch {
+      return next({ path: '/academic-book-journal', replace: true })
+    }
+  }
+
   // Redirect authenticated users away from guest-only pages
   if (to.meta.guestOnly && isAuthenticated) {
-    return next({ name: 'home' })
+    return next({ path: '/' })
   }
 
   // Require authentication

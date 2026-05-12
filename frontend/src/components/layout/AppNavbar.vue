@@ -57,7 +57,7 @@ function toggleUser() {
 async function handleLogout() {
   await authStore.logout()
   userMenuOpen.value = false
-  router.push({ name: 'home' })
+  router.push(siteInfo.journalHomePath)
 }
 
 function getInitials(name: string): string {
@@ -87,7 +87,7 @@ const isActive = (path: string) => route.path.startsWith(path)
       <div class="flex h-20 items-center justify-between gap-4">
 
         <!-- Logo + journal name (configurable via admin home-settings) -->
-        <RouterLink to="/" class="flex items-center gap-3 shrink-0">
+        <RouterLink :to="siteInfo.journalHomePath" class="flex items-center gap-3 shrink-0">
           <div class="flex shrink-0 items-center justify-center">
             <template v-if="!siteInfo.loaded">
               <div class="skeleton h-11 w-11 rounded-lg" />
@@ -336,7 +336,7 @@ const isActive = (path: string) => route.path.startsWith(path)
         >
           <ul class="flex flex-col gap-0.5">
             <li>
-              <RouterLink to="/" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" exact active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <RouterLink :to="siteInfo.journalHomePath" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" exact active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 {{ t('nav.home') }}
               </RouterLink>
             </li>

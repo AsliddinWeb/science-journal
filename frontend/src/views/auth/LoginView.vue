@@ -44,7 +44,7 @@ async function handleSubmit() {
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="mb-8 text-center">
-        <RouterLink to="/" class="inline-flex items-center gap-2.5">
+        <RouterLink :to="siteInfo.journalHomePath" class="inline-flex items-center gap-2.5">
           <img
             v-if="siteInfo.logoUrl"
             :src="siteInfo.logoUrl"

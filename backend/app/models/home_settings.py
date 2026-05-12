@@ -28,6 +28,9 @@ class HomeSettings(Base):
     site_name: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     site_tagline: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
+    # URL slug for the journal — "/" redirects to "/{journal_slug}".
+    journal_slug: Mapped[str] = mapped_column(String(100), nullable=False, default="academic-book-journal")
+
     # Footer content
     footer_description: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     contact_email: Mapped[str | None] = mapped_column(String(255), nullable=True)

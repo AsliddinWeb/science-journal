@@ -73,7 +73,7 @@ function resolveLogo(u?: string) {
       <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <!-- Brand -->
         <div class="sm:col-span-2 lg:col-span-1">
-          <RouterLink to="/" class="flex items-center gap-2.5">
+          <RouterLink :to="siteInfo.journalHomePath" class="flex items-center gap-2.5">
             <template v-if="!siteInfo.loaded">
               <div class="skeleton h-9 w-9 rounded-xl" />
               <div class="skeleton h-5 w-32 rounded" />

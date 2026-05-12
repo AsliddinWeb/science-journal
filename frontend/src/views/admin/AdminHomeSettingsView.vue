@@ -29,6 +29,7 @@ const form = ref({
   site_logo_url: '',
   site_name: { uz: '', ru: '', en: '' },
   site_tagline: { uz: '', ru: '', en: '' },
+  journal_slug: 'academic-book-journal',
   footer_description: { uz: '', ru: '', en: '' },
   contact_email: '',
   contact_phone: '',
@@ -77,6 +78,7 @@ onMounted(async () => {
       site_logo_url: data.site_logo_url || '',
       site_name: data.site_name || { uz: '', ru: '', en: '' },
       site_tagline: data.site_tagline || { uz: '', ru: '', en: '' },
+      journal_slug: (data.journal_slug || 'academic-book-journal').trim() || 'academic-book-journal',
       footer_description: data.footer_description || { uz: '', ru: '', en: '' },
       contact_email: data.contact_email || '',
       contact_phone: data.contact_phone || '',
@@ -112,6 +114,15 @@ onMounted(async () => {
 })
 
 async function save() {
+  // Normalize journal_slug: lowercase, kebab-case, no spaces, alnum + dashes.
+  const cleanSlug = (form.value.journal_slug || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-')
+  form.value.journal_slug = cleanSlug || 'academic-book-journal'
+
   saving.value = true
   try {
     await api.put('/api/home-settings', {
@@ -260,6 +271,21 @@ async function uploadHeroPoster(e: Event) {
                 placeholder="masalan: Ilmiy jurnal"
               />
               <p class="mt-1 text-[11px] text-slate-400">Navbar'da jurnal nomidan yuqorida kichik matn sifatida chiqadi (Academicbook ornida).</p>
+            </div>
+            <div>
+              <label class="label-base">URL slug — bosh sahifa manzili</label>
+              <div class="flex items-center gap-2">
+                <span class="rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-700">academicbook.uz/</span>
+                <input
+                  v-model="form.journal_slug"
+                  class="input-base flex-1 rounded-l-none font-mono"
+                  placeholder="academic-book-journal"
+                  pattern="^[a-z0-9-]+$"
+                />
+              </div>
+              <p class="mt-1 text-[11px] text-slate-400">
+                Bosh sahifa ushbu manzilda ochiladi (masalan, <code>/academic-book-journal</code>). Faqat kichik harflar, raqamlar, defislar (a–z, 0–9, -).
+              </p>
             </div>
           </div>
         </div>

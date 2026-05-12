@@ -7,6 +7,7 @@ export interface SiteInfoData {
   site_name?: Record<string, string>
   site_tagline?: Record<string, string>
   site_logo_url?: string | null
+  journal_slug?: string | null
   issn_online?: string | null
   issn_print?: string | null
   license_type?: string | null
@@ -80,6 +81,8 @@ export const useSiteInfoStore = defineStore('siteInfo', () => {
 
   const issn = computed(() => data.value?.issn_online || data.value?.issn_print || '')
   const licenseType = computed(() => data.value?.license_type || '')
+  const journalSlug = computed(() => (data.value?.journal_slug || 'academic-book-journal').trim() || 'academic-book-journal')
+  const journalHomePath = computed(() => `/${journalSlug.value}`)
 
   const footerDescription = computed(() => pick(data.value?.footer_description, { uz: '', ru: '', en: '' }))
 
@@ -109,6 +112,8 @@ export const useSiteInfoStore = defineStore('siteInfo', () => {
     logoUrl,
     issn,
     licenseType,
+    journalSlug,
+    journalHomePath,
     footerDescription,
     contactEmail,
     contactPhone,

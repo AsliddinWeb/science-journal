@@ -24,6 +24,7 @@ class HomeSettingsRead(BaseModel):
     site_logo_url: Optional[str] = None
     site_name: dict = {}
     site_tagline: dict = {}
+    journal_slug: str = "academic-book-journal"
     footer_description: dict = {}
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
@@ -60,6 +61,7 @@ class HomeSettingsUpdate(BaseModel):
     site_logo_url: Optional[str] = None
     site_name: Optional[dict] = None
     site_tagline: Optional[dict] = None
+    journal_slug: Optional[str] = None
     footer_description: Optional[dict] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None

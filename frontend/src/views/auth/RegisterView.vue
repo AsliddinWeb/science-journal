@@ -42,7 +42,7 @@ async function handleSubmit() {
   <div class="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
     <div class="w-full max-w-md">
       <div class="mb-8 text-center">
-        <RouterLink to="/" class="inline-flex items-center gap-2.5">
+        <RouterLink :to="siteInfo.journalHomePath" class="inline-flex items-center gap-2.5">
           <img
             v-if="siteInfo.logoUrl"
             :src="siteInfo.logoUrl"
