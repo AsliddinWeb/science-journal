@@ -25,7 +25,9 @@ router = APIRouter(prefix="/api/articles", tags=["articles"])
 @router.get("", response_model=PaginatedResponse[ArticleListItem])
 async def list_articles(
     page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100),
+    # Cap raised to accommodate single-issue "view all articles" pages where
+    # the UI fetches the entire issue at once for category-grouped layout.
+    limit: int = Query(10, ge=1, le=500),
     search: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     volume_id: Optional[uuid.UUID] = Query(None),

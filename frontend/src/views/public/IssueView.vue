@@ -155,18 +155,6 @@ onMounted(load)
               <p v-if="issue.description" class="mt-3 text-sm text-slate-300">
                 {{ issue.description }}
               </p>
-
-              <!-- Full issue PDF -->
-              <a
-                v-if="fullPdfHref"
-                :href="fullPdfHref"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-700"
-              >
-                <Download :size="16" />
-                Sonni to'liq PDF yuklab olish
-              </a>
             </div>
           </div>
         </div>
@@ -201,6 +189,32 @@ onMounted(load)
               :key="article.id"
               :article="article"
             />
+          </div>
+        </section>
+
+        <!-- Full issue PDF — at the end of the issue page -->
+        <section
+          v-if="!loading && fullPdfHref"
+          class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 dark:border-emerald-900/40 dark:from-emerald-950/30 dark:to-slate-800 sm:p-8"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 class="font-serif text-lg font-bold text-emerald-800 dark:text-emerald-200">
+                Sonning to'liq to'plami
+              </h3>
+              <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Ushbu son barcha maqolalarini bitta PDF faylda yuklab oling.
+              </p>
+            </div>
+            <a
+              :href="fullPdfHref"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700"
+            >
+              <Download :size="16" />
+              Sonni to'liq PDF yuklab olish
+            </a>
           </div>
         </section>
       </div>
