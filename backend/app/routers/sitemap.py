@@ -75,11 +75,12 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
         # Home (journal landing) — highest priority
         lines.append(_url_entry(f"{SITE_URL}/{journal_slug}", changefreq="daily", priority="1.0"))
 
+        # All static and article URLs live under /{journal_slug}/...
         for path, priority, freq in STATIC_PATHS:
-            lines.append(_url_entry(f"{SITE_URL}{path}", changefreq=freq, priority=priority))
+            lines.append(_url_entry(f"{SITE_URL}/{journal_slug}{path}", changefreq=freq, priority=priority))
 
         for article_id, updated_at in articles:
-            loc = f"{SITE_URL}/articles/{article_id}"
+            loc = f"{SITE_URL}/{journal_slug}/articles/{article_id}"
             lastmod = updated_at.isoformat() if updated_at else None
             lines.append(_url_entry(loc, lastmod=lastmod, changefreq="monthly", priority="0.8"))
 

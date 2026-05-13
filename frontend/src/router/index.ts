@@ -2,83 +2,82 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
-  // Public routes
+  // Public routes — all live under the admin-configurable :journalSlug.
+  // beforeEach below redirects "/" and bare "/articles", "/archive", … to
+  // the slug-prefixed equivalents so old links don't break.
   {
     path: '/',
     component: () => import('@/components/layout/AppLayout.vue'),
     children: [
       {
-        path: '',
-        name: 'home',
-        component: () => import('@/views/public/HomeView.vue'),
-        meta: { title: 'Home' },
-      },
-      {
-        path: 'articles',
-        name: 'articles',
-        component: () => import('@/views/public/ArticlesView.vue'),
-        meta: { title: 'Articles' },
-      },
-      {
-        path: 'articles/:id',
-        name: 'article-detail',
-        component: () => import('@/views/public/ArticleDetailView.vue'),
-        meta: { title: 'Article' },
-      },
-      {
-        path: 'archive',
-        name: 'archive',
-        component: () => import('@/views/public/ArchiveView.vue'),
-        meta: { title: 'Archive' },
-      },
-      {
-        path: 'archive/:volumeId/issues/:issueId',
-        name: 'issue',
-        component: () => import('@/views/public/IssueView.vue'),
-        meta: { title: 'Issue' },
-      },
-      {
-        path: 'editorial-board',
-        name: 'editorial-board',
-        component: () => import('@/views/public/EditorialBoardView.vue'),
-        meta: { title: 'Editorial Board' },
-      },
-      {
-        path: 'contact',
-        name: 'contact',
-        component: () => import('@/views/public/ContactView.vue'),
-        meta: { title: 'Contact' },
-      },
-      {
-        path: 'search',
-        name: 'search',
-        component: () => import('@/views/public/SearchView.vue'),
-        meta: { title: 'Search' },
-      },
-      {
-        path: 'conferences',
-        name: 'conferences',
-        component: () => import('@/views/public/ConferencesView.vue'),
-        meta: { title: 'Konferensiyalar' },
-      },
-      {
-        path: 'conferences/:id',
-        name: 'conference-detail',
-        component: () => import('@/views/public/ConferenceDetailView.vue'),
-        meta: { title: 'Konferensiya' },
-      },
-      {
-        path: 'pages/:slug',
-        name: 'static-page',
-        component: () => import('@/views/public/StaticPageView.vue'),
-      },
-      // Journal home — admin-configurable slug (e.g. /academic-book-journal).
-      // Must be LAST among children so explicit static paths win the resolver.
-      {
         path: ':journalSlug',
-        name: 'journal-home',
-        component: () => import('@/views/public/HomeView.vue'),
-        meta: { title: 'Home' },
+        children: [
+          {
+            path: '',
+            name: 'journal-home',
+            component: () => import('@/views/public/HomeView.vue'),
+            meta: { title: 'Home' },
+          },
+          {
+            path: 'articles',
+            name: 'articles',
+            component: () => import('@/views/public/ArticlesView.vue'),
+            meta: { title: 'Articles' },
+          },
+          {
+            path: 'articles/:id',
+            name: 'article-detail',
+            component: () => import('@/views/public/ArticleDetailView.vue'),
+            meta: { title: 'Article' },
+          },
+          {
+            path: 'archive',
+            name: 'archive',
+            component: () => import('@/views/public/ArchiveView.vue'),
+            meta: { title: 'Archive' },
+          },
+          {
+            path: 'archive/:volumeId/issues/:issueId',
+            name: 'issue',
+            component: () => import('@/views/public/IssueView.vue'),
+            meta: { title: 'Issue' },
+          },
+          {
+            path: 'editorial-board',
+            name: 'editorial-board',
+            component: () => import('@/views/public/EditorialBoardView.vue'),
+            meta: { title: 'Editorial Board' },
+          },
+          {
+            path: 'contact',
+            name: 'contact',
+            component: () => import('@/views/public/ContactView.vue'),
+            meta: { title: 'Contact' },
+          },
+          {
+            path: 'search',
+            name: 'search',
+            component: () => import('@/views/public/SearchView.vue'),
+            meta: { title: 'Search' },
+          },
+          {
+            path: 'conferences',
+            name: 'conferences',
+            component: () => import('@/views/public/ConferencesView.vue'),
+            meta: { title: 'Konferensiyalar' },
+          },
+          {
+            path: 'conferences/:id',
+            name: 'conference-detail',
+            component: () => import('@/views/public/ConferenceDetailView.vue'),
+            meta: { title: 'Konferensiya' },
+          },
+          {
+            path: 'pages/:slug',
+            name: 'static-page',
+            component: () => import('@/views/public/StaticPageView.vue'),
+          },
+        ],
       },
     ],
   },
@@ -343,6 +342,20 @@ const router = createRouter({
   },
 })
 
+// Top-level segments that are NOT journal slugs (must never be mistaken for one).
+const RESERVED_TOP_LEVEL = new Set([
+  'admin', 'author', 'reviewer', 'login', 'register',
+  'verify-email', 'email-confirmed',
+  'api', 'sitemap.xml', 'robots.txt', 'prerender',
+])
+
+// Old (non-slugged) public paths that should redirect to the slug-prefixed
+// equivalent. Match the first segment.
+const PUBLIC_TOP_SEGMENTS = new Set([
+  'articles', 'archive', 'editorial-board', 'contact', 'search',
+  'conferences', 'pages',
+])
+
 // Navigation guards
 router.beforeEach(async (to, _from, next) => {
   // Set page title. The actual journal name is appended later by useSeoMeta
@@ -353,23 +366,46 @@ router.beforeEach(async (to, _from, next) => {
   const token = localStorage.getItem('access_token')
   const isAuthenticated = !!token
 
-  // "/" and "/journal-home" → redirect to the admin-configured slug.
-  // Ensure siteInfo is loaded so we know the slug, then permanently redirect.
-  if (to.path === '/' || (to.name === 'journal-home' && false)) {
-    try {
-      const { useSiteInfoStore } = await import('@/stores/siteInfo')
-      const siteInfo = useSiteInfoStore()
-      if (!siteInfo.loaded) await siteInfo.load()
-      const slug = siteInfo.journalSlug || 'academic-book-journal'
-      return next({ path: `/${slug}`, replace: true })
-    } catch {
-      return next({ path: '/academic-book-journal', replace: true })
-    }
+  // Resolve journal slug (from siteInfo, default fallback).
+  let slug = 'academic-book-journal'
+  try {
+    const { useSiteInfoStore } = await import('@/stores/siteInfo')
+    const siteInfo = useSiteInfoStore()
+    if (!siteInfo.loaded) await siteInfo.load()
+    slug = siteInfo.journalSlug || slug
+  } catch { /* fall through with default */ }
+
+  const path = to.path
+
+  // "/" → "/{slug}"
+  if (path === '/') {
+    return next({ path: `/${slug}${to.hash || ''}`, query: to.query, replace: true })
+  }
+
+  // Detect first path segment and decide redirection
+  const firstSeg = path.split('/').filter(Boolean)[0] || ''
+
+  // Old public path without slug → prepend slug
+  // e.g. /articles/abc-123 → /{slug}/articles/abc-123
+  if (PUBLIC_TOP_SEGMENTS.has(firstSeg)) {
+    return next({ path: `/${slug}${path}${to.hash || ''}`, query: to.query, replace: true })
+  }
+
+  // If first segment is a journal slug that doesn't match current configured
+  // slug (e.g. user has bookmarked the old slug), redirect to the new one.
+  if (
+    firstSeg
+    && !RESERVED_TOP_LEVEL.has(firstSeg)
+    && to.matched.some(r => r.path.startsWith('/:journalSlug'))
+    && firstSeg !== slug
+  ) {
+    const rest = path.slice(firstSeg.length + 1) // strip "/<wrongSlug>"
+    return next({ path: `/${slug}${rest}${to.hash || ''}`, query: to.query, replace: true })
   }
 
   // Redirect authenticated users away from guest-only pages
   if (to.meta.guestOnly && isAuthenticated) {
-    return next({ path: '/' })
+    return next({ path: `/${slug}` })
   }
 
   // Require authentication

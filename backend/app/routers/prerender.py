@@ -109,9 +109,12 @@ async def prerender_article(
     site_name_uz = ""
     issn = ""
     publisher = ""
+    journal_slug = "academic-book-journal"
     if hs_row:
         site_name_en = _pick(hs_row.site_name, "en") or _pick(hs_row.hero_title, "en")
         site_name_uz = _pick(hs_row.site_name, "uz") or _pick(hs_row.hero_title, "uz")
+        if hs_row.journal_slug:
+            journal_slug = hs_row.journal_slug
         issn = hs_row.issn_online or hs_row.issn_print or ""
         publisher = site_name_en or site_name_uz
 
@@ -150,7 +153,7 @@ async def prerender_article(
 
     # URLs
     base_url = str(settings.APP_URL).rstrip("/") if settings.APP_URL else f"{request.url.scheme}://{request.url.netloc}"
-    abstract_html_url = f"{base_url}/articles/{article.id}"
+    abstract_html_url = f"{base_url}/{journal_slug}/articles/{article.id}"
     pdf_url = ""
     if article.pdf_file_path:
         p = article.pdf_file_path
