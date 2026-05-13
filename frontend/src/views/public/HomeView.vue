@@ -92,7 +92,9 @@ function categoryName(c: Category) {
 onMounted(async () => {
   try {
     const [articlesData, volumesData, homeSettings, statsData, categoriesData] = await Promise.all([
-      api.get<PaginatedResponse<Article>>('/api/articles?limit=6&status=published'),
+      // Sort by page number (smallest first) — matches the issue page and
+      // the /articles list default ordering.
+      api.get<PaginatedResponse<Article>>('/api/articles?limit=6&status=published&sort=pages'),
       api.get<Volume[]>('/api/volumes'),
       api.get<HomeSettingsData>('/api/home-settings').catch(() => null),
       api.get<typeof stats.value>('/api/stats/overview').catch(() => null),

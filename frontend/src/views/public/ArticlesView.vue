@@ -40,7 +40,9 @@ const filters = reactive({
   language: (route.query.language as string) ?? '',
   volume_id: (route.query.volume as string) ?? '',
   category: (route.query.category as string) ?? '',
-  sort: (route.query.sort as string) ?? 'newest',
+  // Default sort by page number (ascending) — same convention as the issue
+  // page and home page. The reader can still pick "newest"/"oldest" etc.
+  sort: (route.query.sort as string) ?? 'pages',
   page: Number(route.query.page) || 1,
 })
 
@@ -54,7 +56,7 @@ const sortOptions = computed(() => [
 ])
 
 const hasActiveFilters = computed(() =>
-  !!(filters.search || filters.language || filters.volume_id || filters.category || filters.sort !== 'newest')
+  !!(filters.search || filters.language || filters.volume_id || filters.category || filters.sort !== 'pages')
 )
 
 function categoryName(c: Category | { name_uz: string; name_ru: string; name_en: string }) {
@@ -132,7 +134,7 @@ watch(
         ...(filters.language && { language: filters.language }),
         ...(filters.volume_id && { volume: filters.volume_id }),
         ...(filters.category && { category: filters.category }),
-        ...(filters.sort !== 'newest' && { sort: filters.sort }),
+        ...(filters.sort !== 'pages' && { sort: filters.sort }),
         ...(filters.page > 1 && { page: String(filters.page) }),
       },
     })
@@ -156,7 +158,7 @@ function clearFilters() {
   filters.language = ''
   filters.volume_id = ''
   filters.category = ''
-  filters.sort = 'newest'
+  filters.sort = 'pages'
   filters.page = 1
 }
 
