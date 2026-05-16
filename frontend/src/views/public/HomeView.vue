@@ -67,6 +67,16 @@ const heroTitle = computed(() => hs.value?.hero_title?.[lang.value] || hs.value?
 const heroSubtitle = computed(() => hs.value?.hero_subtitle?.[lang.value] || hs.value?.hero_subtitle?.uz || '')
 const aboutTitle = computed(() => hs.value?.about_title?.[lang.value] || hs.value?.about_title?.uz || t('nav.about_journal'))
 const aboutText = computed(() => hs.value?.about_text?.[lang.value] || hs.value?.about_text?.uz || '')
+// Split admin-entered text into paragraphs (blank-line separated, else single newlines).
+const aboutParagraphs = computed(() => {
+  const text = aboutText.value
+  if (!text) return []
+  // Prefer blank-line (\n\n) splits; fall back to single-newline.
+  const parts = text.includes('\n\n')
+    ? text.split(/\n\s*\n/)
+    : text.split('\n')
+  return parts.map(p => p.trim()).filter(Boolean)
+})
 const ctaTitle = computed(() => hs.value?.cta_title?.[lang.value] || hs.value?.cta_title?.uz || t('home.submit_cta_title'))
 const ctaSubtitle = computed(() => hs.value?.cta_subtitle?.[lang.value] || hs.value?.cta_subtitle?.uz || t('home.submit_cta_desc'))
 const heroVideo = computed<HeroVideo>(() =>
@@ -239,10 +249,13 @@ const statItems = computed(() => [
       </div>
     </section>
 
-    <!-- About Section -->
+    <!-- About Section — each paragraph from admin renders separately -->
     <section class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-8">
       <h2 class="font-serif text-2xl font-bold text-journal-800 dark:text-primary-300">{{ aboutTitle }}</h2>
-      <p class="mt-4 leading-relaxed text-slate-700 dark:text-slate-300">{{ aboutText || t('home.hero_subtitle') }}</p>
+      <div class="mt-4 space-y-3 leading-relaxed text-slate-700 dark:text-slate-300">
+        <p v-if="!aboutParagraphs.length">{{ t('home.hero_subtitle') }}</p>
+        <p v-for="(para, i) in aboutParagraphs" :key="i" class="text-justify">{{ para }}</p>
+      </div>
     </section>
 
     <!-- Tabs -->

@@ -436,7 +436,15 @@ async function uploadHeroPoster(e: Event) {
           </div>
           <div>
             <label class="label-base">{{ t('admin.homeSettings.aboutText') }} ({{ langTab.toUpperCase() }})</label>
-            <textarea v-model="form.about_text[langTab]" rows="4" class="input-base w-full resize-none" />
+            <textarea
+              v-model="form.about_text[langTab]"
+              rows="10"
+              class="input-base w-full resize-y leading-relaxed"
+              placeholder="Birinchi abzas matni...&#10;&#10;Ikkinchi abzas — har abzas yangi qator (yoki bo'sh qator) bilan ajratiladi.&#10;&#10;Uchinchi abzas..."
+            />
+            <p class="mt-1 text-[11px] text-slate-400">
+              Yangi abzas ochish uchun <strong>bo'sh qator</strong> qoldiring yoki <strong>Enter</strong> bosing. Har abzas bosh sahifada alohida paragraph sifatida ko'rinadi.
+            </p>
           </div>
           <div>
             <label class="label-base">{{ t('admin.homeSettings.aboutImage') }}</label>

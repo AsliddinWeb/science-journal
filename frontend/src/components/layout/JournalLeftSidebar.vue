@@ -24,14 +24,10 @@ onMounted(async () => {
   } catch { /* ignore */ }
 })
 
-const volumesByYear = computed(() => {
-  const m = new Map<number, Volume[]>()
-  volumes.value.forEach(v => {
-    if (!m.has(v.year)) m.set(v.year, [])
-    m.get(v.year)!.push(v)
-  })
-  return Array.from(m.entries()).sort((a, b) => b[0] - a[0])
-})
+// Volumes sorted newest first (by year desc, then number desc).
+const sortedVolumes = computed(() =>
+  [...volumes.value].sort((a, b) => (b.year - a.year) || (b.number - a.number))
+)
 </script>
 
 <template>
@@ -136,26 +132,24 @@ const volumesByYear = computed(() => {
       {{ t('nav.contact') }}
     </RouterLink>
 
-    <!-- Volumes (collapsible) -->
-    <div v-for="[year, vols] in volumesByYear" :key="year" class="mt-1">
+    <!-- Volumes (collapsible) — sorted newest first -->
+    <div v-for="v in sortedVolumes" :key="v.id" class="mt-1">
       <button
         class="flex w-full items-center justify-between gap-3 rounded-lg bg-white border border-stone-200 px-4 py-3 text-sm font-semibold text-journal-800 transition hover:bg-stone-50 hover:border-primary-300 dark:bg-slate-800 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-slate-700"
-        @click="toggle(`vol-${year}`)"
+        @click="toggle(`vol-${v.id}`)"
       >
-        <span>Volume {{ year - 2023 }} ({{ year }})</span>
-        <ChevronDown :size="14" class="transition-transform" :class="{ 'rotate-180': openGroups.has(`vol-${year}`) }" />
+        <span>Volume {{ v.number }} ({{ v.year }})</span>
+        <ChevronDown :size="14" class="transition-transform" :class="{ 'rotate-180': openGroups.has(`vol-${v.id}`) }" />
       </button>
-      <div v-if="openGroups.has(`vol-${year}`)" class="mt-1 space-y-0.5 rounded-lg border border-stone-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
-        <template v-for="v in vols" :key="v.id">
-          <RouterLink
-            v-for="iss in v.issues"
-            :key="iss.id"
-            :to="`/archive/${v.id}/issues/${iss.id}`"
-            class="block py-1 text-xs text-slate-600 hover:text-primary-600 dark:text-slate-400"
-          >
-            📄 Issue {{ iss.number }}
-          </RouterLink>
-        </template>
+      <div v-if="openGroups.has(`vol-${v.id}`) && v.issues && v.issues.length" class="mt-1 space-y-0.5 rounded-lg border border-stone-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
+        <RouterLink
+          v-for="iss in v.issues"
+          :key="iss.id"
+          :to="`/archive/${v.id}/issues/${iss.id}`"
+          class="block py-1 text-xs text-slate-600 hover:text-primary-600 dark:text-slate-400"
+        >
+          📄 Issue {{ iss.number }}
+        </RouterLink>
       </div>
     </div>
   </aside>
