@@ -65,6 +65,12 @@ const activeTab = ref<'details' | 'authors' | 'policy'>('details')
 
 const heroTitle = computed(() => hs.value?.hero_title?.[lang.value] || hs.value?.hero_title?.uz || '')
 const heroSubtitle = computed(() => hs.value?.hero_subtitle?.[lang.value] || hs.value?.hero_subtitle?.uz || '')
+const heroSubtitleParagraphs = computed(() => {
+  const text = heroSubtitle.value
+  if (!text) return []
+  const parts = text.includes('\n\n') ? text.split(/\n\s*\n/) : text.split('\n')
+  return parts.map(p => p.trim()).filter(Boolean)
+})
 const aboutTitle = computed(() => hs.value?.about_title?.[lang.value] || hs.value?.about_title?.uz || t('nav.about_journal'))
 const aboutText = computed(() => hs.value?.about_text?.[lang.value] || hs.value?.about_text?.uz || '')
 // Split admin-entered text into paragraphs (blank-line separated, else single newlines).
@@ -192,7 +198,10 @@ const statItems = computed(() => [
             <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
               {{ heroTitle }}
             </h1>
-            <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+            <div class="mt-3 space-y-2 text-sm leading-relaxed text-slate-300 sm:text-base">
+              <p v-if="!heroSubtitleParagraphs.length">{{ heroSubtitle }}</p>
+              <p v-for="(para, i) in heroSubtitleParagraphs" :key="i">{{ para }}</p>
+            </div>
           </template>
         </div>
 
@@ -231,7 +240,10 @@ const statItems = computed(() => [
             <h1 class="mt-4 font-serif text-3xl font-bold text-primary-200 sm:text-4xl">
               {{ heroTitle }}
             </h1>
-            <p class="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">{{ heroSubtitle }}</p>
+            <div class="mt-3 space-y-2 text-sm leading-relaxed text-slate-300 sm:text-base">
+              <p v-if="!heroSubtitleParagraphs.length">{{ heroSubtitle }}</p>
+              <p v-for="(para, i) in heroSubtitleParagraphs" :key="i">{{ para }}</p>
+            </div>
           </template>
         </div>
 
