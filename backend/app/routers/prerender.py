@@ -76,6 +76,23 @@ def _flatten_list(value: Any) -> list[str]:
     return []
 
 
+def _per_lang_text(value: Any) -> dict[str, str]:
+    """Extract per-language text from a multilingual dict; values may be str or list[str].
+
+    Returns only languages that have non-empty content, in uz/ru/en order.
+    """
+    out: dict[str, str] = {}
+    if not isinstance(value, dict):
+        return out
+    for k in ("uz", "ru", "en"):
+        v = value.get(k)
+        if isinstance(v, list):
+            v = ", ".join(str(x).strip() for x in v if x)
+        if isinstance(v, str) and v.strip():
+            out[k] = v.strip()
+    return out
+
+
 # ─── route ───────────────────────────────────────────────────────────────────
 
 @router.api_route("/articles/{article_id}", methods=["GET", "HEAD"], include_in_schema=False)
@@ -107,16 +124,22 @@ async def prerender_article(
     hs_row = (await db.execute(select(HomeSettings).where(HomeSettings.id == "default"))).scalar_one_or_none()
     site_name_en = ""
     site_name_uz = ""
-    issn = ""
+    issn_online = ""
+    issn_print = ""
     publisher = ""
+    license_type = ""
     journal_slug = "academic-book-journal"
     if hs_row:
         site_name_en = _pick(hs_row.site_name, "en") or _pick(hs_row.hero_title, "en")
         site_name_uz = _pick(hs_row.site_name, "uz") or _pick(hs_row.hero_title, "uz")
         if hs_row.journal_slug:
             journal_slug = hs_row.journal_slug
-        issn = hs_row.issn_online or hs_row.issn_print or ""
+        issn_online = (hs_row.issn_online or "").strip()
+        issn_print = (hs_row.issn_print or "").strip()
         publisher = site_name_en or site_name_uz
+        license_type = (hs_row.license_type or "").strip()
+    # Scholar uses a single ISSN — prefer online (e-ISSN) over print.
+    issn = issn_online or issn_print
 
     # ── Fields ──
     lang = getattr(article.language, "value", str(article.language)) if article.language else "en"
@@ -163,14 +186,22 @@ async def prerender_article(
 
     keywords = _flatten_list(article.keywords)
     references = _flatten_list(article.references)
+    abstracts_by_lang = _per_lang_text(article.abstract)
+    keywords_by_lang = _per_lang_text(article.keywords)
+    titles_by_lang = _per_lang_text(article.title)
 
     journal_title = site_name_en or publisher or "Journal"
     pub_date = _scholar_date(article.published_date or article.created_at)
+    iso_pub_date = (article.published_date or article.created_at).strftime("%Y-%m-%d") if (article.published_date or article.created_at) else ""
+    iso_created = article.created_at.strftime("%Y-%m-%d") if article.created_at else ""
+    iso_updated = article.updated_at.strftime("%Y-%m-%d") if getattr(article, "updated_at", None) else ""
     volume_num = str(article.volume.number) if article.volume else ""
     issue_num = str(article.issue.number) if article.issue else ""
+    journal_uri = f"{base_url}/{journal_slug}"
 
     # ── Meta tags (Google Scholar citation_*) ──
-    citation_meta: list[str] = []
+    # Scholar version marker — tells the crawler which meta-tag schema we use.
+    citation_meta: list[str] = ['<meta name="gs_meta_revision" content="1.1">']
     citation_meta.append(f'<meta name="citation_title" content="{_e(title)}">')
     for a in authors:
         citation_meta.append(f'<meta name="citation_author" content="{_e(a["name"])}">')
@@ -179,12 +210,17 @@ async def prerender_article(
         if a["orcid"]:
             citation_meta.append(f'<meta name="citation_author_orcid" content="{_e(a["orcid"])}">')
     if pub_date:
+        # Both forms — `citation_date` is the modern preferred name; the legacy
+        # `citation_publication_date` is kept for older Scholar consumers.
+        citation_meta.append(f'<meta name="citation_date" content="{_e(pub_date)}">')
         citation_meta.append(f'<meta name="citation_publication_date" content="{_e(pub_date)}">')
         citation_meta.append(f'<meta name="citation_online_date" content="{_e(pub_date)}">')
     if journal_title:
         citation_meta.append(f'<meta name="citation_journal_title" content="{_e(journal_title)}">')
-    if issn:
-        citation_meta.append(f'<meta name="citation_issn" content="{_e(issn)}">')
+    if issn_online:
+        citation_meta.append(f'<meta name="citation_issn" content="{_e(issn_online)}">')
+    if issn_print and issn_print != issn_online:
+        citation_meta.append(f'<meta name="citation_issn" content="{_e(issn_print)}">')
     if volume_num:
         citation_meta.append(f'<meta name="citation_volume" content="{_e(volume_num)}">')
     if issue_num:
@@ -200,10 +236,73 @@ async def prerender_article(
     citation_meta.append(f'<meta name="citation_abstract_html_url" content="{_e(abstract_html_url)}">')
     if lang:
         citation_meta.append(f'<meta name="citation_language" content="{_e(lang)}">')
-    if keywords:
+    # Per-language abstract — Scholar prefers separate xml:lang tags over a
+    # single multi-language blob.
+    if abstracts_by_lang:
+        for k, v in abstracts_by_lang.items():
+            citation_meta.append(f'<meta name="citation_abstract" xml:lang="{k}" content="{_e(v)}">')
+    elif abstract:
+        citation_meta.append(f'<meta name="citation_abstract" content="{_e(abstract)}">')
+    # Per-language keywords (preferred). Fall back to a single concatenated tag.
+    if keywords_by_lang:
+        for k, v in keywords_by_lang.items():
+            citation_meta.append(f'<meta name="citation_keywords" xml:lang="{k}" content="{_e(v)}">')
+    elif keywords:
         citation_meta.append(f'<meta name="citation_keywords" content="{_e("; ".join(keywords))}">')
     if publisher:
         citation_meta.append(f'<meta name="citation_publisher" content="{_e(publisher)}">')
+    # One <meta name="citation_reference"> per reference — feeds Scholar's
+    # citation graph so our articles can be discovered via others' bibliographies.
+    for ref in references:
+        citation_meta.append(f'<meta name="citation_reference" content="{_e(ref)}">')
+
+    # ── Dublin Core metadata (DC.*) ──
+    # OAI-PMH / Scholar fallback set. Mirrors what OJS-based journals emit.
+    dc_meta: list[str] = []
+    dc_meta.append(f'<meta name="DC.Title" content="{_e(title)}">')
+    for k, v in titles_by_lang.items():
+        dc_meta.append(f'<meta name="DC.Title" xml:lang="{k}" content="{_e(v)}">')
+    for a in authors:
+        dc_meta.append(f'<meta name="DC.Creator.PersonalName" content="{_e(a["name"])}">')
+    if iso_created:
+        dc_meta.append(f'<meta name="DC.Date.created" scheme="ISO8601" content="{_e(iso_created)}">')
+    if iso_pub_date:
+        dc_meta.append(f'<meta name="DC.Date.issued" scheme="ISO8601" content="{_e(iso_pub_date)}">')
+    if iso_updated:
+        dc_meta.append(f'<meta name="DC.Date.modified" scheme="ISO8601" content="{_e(iso_updated)}">')
+    for k, v in abstracts_by_lang.items():
+        dc_meta.append(f'<meta name="DC.Description" xml:lang="{k}" content="{_e(v)}">')
+    if pdf_url:
+        dc_meta.append('<meta name="DC.Format" scheme="IMT" content="application/pdf">')
+    dc_meta.append(f'<meta name="DC.Identifier" content="{_e(str(article.id))}">')
+    if article.pages:
+        dc_meta.append(f'<meta name="DC.Identifier.pageNumber" content="{_e(article.pages)}">')
+    if article.doi:
+        dc_meta.append(f'<meta name="DC.Identifier.DOI" content="{_e(article.doi)}">')
+    dc_meta.append(f'<meta name="DC.Identifier.URI" content="{_e(abstract_html_url)}">')
+    if lang:
+        dc_meta.append(f'<meta name="DC.Language" scheme="ISO639-1" content="{_e(lang)}">')
+    if journal_title:
+        dc_meta.append(f'<meta name="DC.Source" content="{_e(journal_title)}">')
+    if issn_online:
+        dc_meta.append(f'<meta name="DC.Source.ISSN" content="{_e(issn_online)}">')
+    if issn_print and issn_print != issn_online:
+        dc_meta.append(f'<meta name="DC.Source.ISSN" content="{_e(issn_print)}">')
+    if volume_num:
+        dc_meta.append(f'<meta name="DC.Source.Volume" content="{_e(volume_num)}">')
+    if issue_num:
+        dc_meta.append(f'<meta name="DC.Source.Issue" content="{_e(issue_num)}">')
+    dc_meta.append(f'<meta name="DC.Source.URI" content="{_e(journal_uri)}">')
+    for k, v in keywords_by_lang.items():
+        dc_meta.append(f'<meta name="DC.Subject" xml:lang="{k}" content="{_e(v)}">')
+    if not keywords_by_lang and keywords:
+        dc_meta.append(f'<meta name="DC.Subject" content="{_e(", ".join(keywords))}">')
+    dc_meta.append('<meta name="DC.Type" content="Text.Serial.Journal">')
+    dc_meta.append('<meta name="DC.Type.articleType" content="Article">')
+    if publisher:
+        dc_meta.append(f'<meta name="DC.Publisher" content="{_e(publisher)}">')
+    if license_type:
+        dc_meta.append(f'<meta name="DC.Rights" content="{_e(license_type)}">')
 
     # Open Graph
     og_meta = [
@@ -262,6 +361,7 @@ async def prerender_article(
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{_e(abstract_html_url)}">
 {chr(10).join(citation_meta)}
+{chr(10).join(dc_meta)}
 {chr(10).join(og_meta)}
 <script type="application/ld+json">
 {_json.dumps(jsonld, ensure_ascii=False, default=str)}
