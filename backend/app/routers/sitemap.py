@@ -16,18 +16,26 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["sitemap"])
 
 SITE_URL = settings.APP_URL
-# "/" is intentionally omitted — it is a 302 redirect to /{journal_slug}.
+# "/" is intentionally omitted — it is a 302 redirect to /{journal_slug}/index.
+# Paths mirror the OJS URL convention so harvesters (Google Scholar etc.)
+# recognise the site's structure.
 STATIC_PATHS = [
-    ("/articles", "0.9", "daily"),
-    ("/archive", "0.8", "weekly"),
-    ("/editorial-board", "0.6", "monthly"),
-    ("/contact", "0.5", "monthly"),
-    ("/pages/about", "0.6", "monthly"),
-    ("/pages/aims-scope", "0.6", "monthly"),
-    ("/pages/open-access", "0.5", "monthly"),
-    ("/pages/peer-review", "0.5", "monthly"),
-    ("/pages/author-guidelines", "0.7", "monthly"),
-    ("/pages/indexing", "0.5", "monthly"),
+    ("/index", "1.0", "daily"),
+    ("/issue/current", "0.9", "weekly"),
+    ("/issue/archive", "0.8", "weekly"),
+    ("/search", "0.6", "monthly"),
+    ("/about", "0.6", "monthly"),
+    ("/about/editorialTeam", "0.6", "monthly"),
+    ("/about/contact", "0.5", "monthly"),
+    ("/about/submissions", "0.7", "monthly"),
+    ("/about/editorialPolicies", "0.5", "monthly"),
+    ("/about/privacy", "0.4", "monthly"),
+    # Legacy non-OJS paths kept so existing inbound links still appear in the
+    # sitemap until search engines fully migrate to the canonical OJS forms.
+    ("/articles", "0.7", "daily"),
+    ("/archive", "0.6", "weekly"),
+    ("/editorial-board", "0.5", "monthly"),
+    ("/contact", "0.4", "monthly"),
 ]
 LANGS = ["uz", "ru", "en"]
 
@@ -60,6 +68,12 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
         )
         articles = articles_result.all()
 
+        issues_result = await db.execute(
+            select(Issue.id, Issue.published_date)
+            .order_by(Issue.published_date.desc().nulls_last())
+        )
+        issues = issues_result.all()
+
         # Resolve the journal_slug from home_settings — the actual home URL
         hs_result = await db.execute(
             select(HomeSettings.journal_slug).where(HomeSettings.id == "default")
@@ -72,15 +86,19 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
             '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
         ]
 
-        # Home (journal landing) — highest priority
-        lines.append(_url_entry(f"{SITE_URL}/{journal_slug}", changefreq="daily", priority="1.0"))
-
-        # All static and article URLs live under /{journal_slug}/...
+        # All static, issue and article URLs live under /{journal_slug}/...
         for path, priority, freq in STATIC_PATHS:
             lines.append(_url_entry(f"{SITE_URL}/{journal_slug}{path}", changefreq=freq, priority=priority))
 
+        # Issue pages — OJS-canonical `/issue/view/{id}` form.
+        for issue_id, published_date in issues:
+            loc = f"{SITE_URL}/{journal_slug}/issue/view/{issue_id}"
+            lastmod = published_date.isoformat() if published_date else None
+            lines.append(_url_entry(loc, lastmod=lastmod, changefreq="monthly", priority="0.7"))
+
+        # Article pages — OJS-canonical `/article/view/{id}` form.
         for article_id, updated_at in articles:
-            loc = f"{SITE_URL}/{journal_slug}/articles/{article_id}"
+            loc = f"{SITE_URL}/{journal_slug}/article/view/{article_id}"
             lastmod = updated_at.isoformat() if updated_at else None
             lines.append(_url_entry(loc, lastmod=lastmod, changefreq="monthly", priority="0.8"))
 

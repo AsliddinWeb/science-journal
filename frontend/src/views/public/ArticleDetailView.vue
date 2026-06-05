@@ -159,17 +159,17 @@ function applyAllMeta() {
     description: abstractEn.slice(0, 160),
     keywords: kwList.join(', '),
     ogImage: `/api/og-image/${a.id}`,
-    ogUrl: `${window.location.origin}/articles/${a.id}`,
-    canonical: `${window.location.origin}/articles/${a.id}`,
+    ogUrl: `${window.location.origin}/${siteInfo.journalSlug}/article/view/${a.id}`,
+    canonical: `${window.location.origin}/${siteInfo.journalSlug}/article/view/${a.id}`,
     type: 'article',
   })
   const brand = { siteName: siteInfo.siteName, issn: siteInfo.issn, logoUrl: siteInfo.logoUrl }
   injectLd([
     buildScholarlyArticle(a, brand),
     buildBreadcrumb([
-      { name: 'Home', url: '/' },
-      { name: 'Articles', url: '/articles' },
-      { name: titleEn, url: `/articles/${a.id}` },
+      { name: 'Home', url: `/${siteInfo.journalSlug}/index` },
+      { name: 'Articles', url: `/${siteInfo.journalSlug}/articles` },
+      { name: titleEn, url: `/${siteInfo.journalSlug}/article/view/${a.id}` },
     ]),
   ])
 
@@ -202,7 +202,7 @@ function applyAllMeta() {
     lastpage,
     doi: a.doi || undefined,
     pdfUrl,
-    abstractHtmlUrl: `/articles/${a.id}`,
+    abstractHtmlUrl: `/${siteInfo.journalSlug}/article/view/${a.id}`,
     language: a.language,
     keywords: kwList,
     publisher: journalTitle,
@@ -306,7 +306,7 @@ const citationText = computed(() => {
     : ''
   const pages = a.pages || ''
   const doi = a.doi ? `https://doi.org/${a.doi}` : ''
-  const articleUrl = typeof window !== 'undefined' ? window.location.href : `/articles/${a.id}`
+  const articleUrl = typeof window !== 'undefined' ? window.location.href : `/${siteInfo.journalSlug}/article/view/${a.id}`
 
   // APA-style: Authors (Year). Title. Journal, Vol(Issue), Pages. DOI \n URL
   const parts: string[] = []
@@ -365,7 +365,7 @@ const pdfHref = computed(() => {
       <nav class="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
         <RouterLink to="/" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.home') }}</RouterLink>
         <ChevronRight :size="14" />
-        <RouterLink to="/archive" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.archive') }}</RouterLink>
+        <RouterLink to="/issue/archive" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.archive') }}</RouterLink>
         <ChevronRight :size="14" />
         <span class="truncate text-journal-800 dark:text-primary-300 max-w-xs">{{ t('nav.articles') }}</span>
       </nav>

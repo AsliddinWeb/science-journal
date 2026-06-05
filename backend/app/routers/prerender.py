@@ -174,9 +174,11 @@ async def prerender_article(
         else:
             firstpage = article.pages.strip()
 
-    # URLs
+    # URLs — OJS-style canonical path (`/{slug}/article/view/{id}`). The
+    # legacy `/{slug}/articles/{id}` form 301-redirects to this on the
+    # frontend, so old links still work.
     base_url = str(settings.APP_URL).rstrip("/") if settings.APP_URL else f"{request.url.scheme}://{request.url.netloc}"
-    abstract_html_url = f"{base_url}/{journal_slug}/articles/{article.id}"
+    abstract_html_url = f"{base_url}/{journal_slug}/article/view/{article.id}"
     pdf_url = ""
     if article.pdf_file_path:
         p = article.pdf_file_path

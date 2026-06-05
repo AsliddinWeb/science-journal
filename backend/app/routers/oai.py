@@ -187,7 +187,7 @@ def _build_oai_dc(article: Article, cfg: dict, base_url: str) -> str:
     keywords = _flatten(article.keywords)
     authors = _article_authors(article)
     lang = getattr(article.language, "value", str(article.language)) if article.language else "en"
-    abstract_url = f"{base_url}/{cfg['journal_slug']}/article/view/{article.id}"
+    abstract_url = f"{base_url}/{cfg['journal_slug']}/article/view/{article.id}"  # OJS-canonical
 
     pdf_path = article.pdf_file_path or ""
     if pdf_path:

@@ -7,7 +7,7 @@ from app.config import settings
 from app.middleware.cors import setup_cors
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.routers import (
-    auth, articles, volumes, stats, editorial, pages,
+    auth, articles, volumes, issues, stats, editorial, pages,
     upload, reviews, admin, contact, users, categories,
     conferences, admin_conferences, home_settings, indexing,
 )
@@ -51,6 +51,7 @@ async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse
 app.include_router(auth.router)
 app.include_router(articles.router)
 app.include_router(volumes.router)
+app.include_router(issues.router)
 app.include_router(stats.router)
 app.include_router(editorial.router)
 app.include_router(pages.router)

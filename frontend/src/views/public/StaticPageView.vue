@@ -22,6 +22,10 @@ interface StaticPage {
   is_published: boolean
 }
 
+// Allow callers to pin a slug via a route prop — used by the OJS-style
+// /about/* routes which don't carry it in the URL.
+const props = defineProps<{ slug?: string }>()
+
 const { t, locale } = useI18n()
 const route = useRoute()
 const localeStore = useLocaleStore()
@@ -36,7 +40,7 @@ interface TocItem { id: string; text: string; level: number }
 const toc = ref<TocItem[]>([])
 const activeId = ref('')
 
-const slug = computed(() => route.params.slug as string)
+const slug = computed(() => props.slug || (route.params.slug as string))
 
 const title = computed(() => {
   if (!page.value) return ''

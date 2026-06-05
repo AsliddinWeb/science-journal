@@ -8,6 +8,7 @@ import {
 } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import { useLocaleStore } from '@/stores/locale'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 import type { Article, PaginatedResponse } from '@/types/article'
 import type { Issue, Volume } from '@/types/volume'
 import { formatDate } from '@/utils/formatDate'
@@ -19,10 +20,13 @@ interface Category { id: string; slug: string; name_uz: string; name_ru: string;
 const { t } = useI18n()
 const route = useRoute()
 const localeStore = useLocaleStore()
+const siteInfo = useSiteInfoStore()
 
 const { apply: applySeo } = useSeoMeta()
 
-const volumeId = computed(() => route.params.volumeId as string)
+// The OJS-canonical route is `/{slug}/issue/view/{issueId}` (no volumeId);
+// the legacy `/archive/{volumeId}/issues/{issueId}` form still lives in the
+// router as a redirect, so volumeId may also be present.
 const issueId = computed(() => route.params.issueId as string)
 
 const volume = ref<Volume | null>(null)
@@ -65,28 +69,34 @@ const groupedSections = computed(() => {
   return sections
 })
 
+interface IssueDetail extends Issue {
+  volume?: Volume | null
+}
+
 async function load() {
   loading.value = true
   error.value = false
   try {
-    // Fetch all articles in the issue (sorted by pages), volume, and categories.
-    const [volumeData, articlesData, categoriesData] = await Promise.all([
-      api.get<Volume>(`/api/volumes/${volumeId.value}`),
+    // Fetch the issue (with its parent volume embedded), the issue's
+    // articles, and categories in parallel.
+    const [issueData, articlesData, categoriesData] = await Promise.all([
+      api.get<IssueDetail>(`/api/issues/${issueId.value}`),
       api.get<PaginatedResponse<Article>>(
-        `/api/articles?issue_id=${issueId.value}&page=1&limit=200&status=published&sort=pages`
+        `/api/articles?issue_id=${issueId.value}&page=1&limit=500&status=published&sort=pages`
       ),
       api.get<Category[]>('/api/categories').catch(() => []),
     ])
-    volume.value = volumeData
-    issue.value = volumeData.issues.find((i) => i.id === issueId.value) ?? null
+    issue.value = issueData
+    volume.value = issueData.volume ?? null
     articles.value = articlesData.items
     total.value = articlesData.total
     categories.value = categoriesData ?? []
-    if (volumeData && issue.value) {
+    if (volume.value && issue.value) {
+      const canonical = `${window.location.origin}/${siteInfo.journalSlug}/issue/view/${issue.value.id}`
       applySeo({
-        title: `Vol. ${volumeData.number}, Issue ${issue.value.number} (${volumeData.year})`,
-        ogUrl: `${window.location.origin}/archive/${volumeData.id}/issues/${issue.value.id}`,
-        canonical: `${window.location.origin}/archive/${volumeData.id}/issues/${issue.value.id}`,
+        title: `Vol. ${volume.value.number}, Issue ${issue.value.number} (${volume.value.year})`,
+        ogUrl: canonical,
+        canonical,
       })
     }
   } catch {
@@ -121,7 +131,7 @@ onMounted(load)
           <nav v-if="!loading" class="mb-4 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
             <RouterLink to="/" class="text-slate-400 hover:text-white">{{ t('nav.home') }}</RouterLink>
             <ChevronRight :size="14" class="text-slate-500" />
-            <RouterLink to="/archive" class="text-slate-400 hover:text-white">{{ t('archive.title') }}</RouterLink>
+            <RouterLink to="/issue/archive" class="text-slate-400 hover:text-white">{{ t('archive.title') }}</RouterLink>
             <ChevronRight :size="14" class="text-slate-500" />
             <span class="text-slate-200" v-if="volume && issue">
               Vol. {{ volume.number }}, Issue {{ issue.number }}

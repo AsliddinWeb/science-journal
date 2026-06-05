@@ -12,47 +12,100 @@ const routes: RouteRecordRaw[] = [
       {
         path: ':journalSlug',
         children: [
+          // ── OJS-canonical public routes ──
+          // Mirror the URL shape used by OJS-based journals
+          // (e.g. publishscience.uz/sirsh/index, /article/view/:id,
+          // /issue/view/:id, /about/editorialTeam). Google Scholar's
+          // platform fingerprint recognises this layout.
+          { path: '', redirect: (to) => ({ path: `/${to.params.journalSlug}/index`, query: to.query, hash: to.hash }) },
           {
-            path: '',
+            path: 'index',
             name: 'journal-home',
             component: () => import('@/views/public/HomeView.vue'),
             meta: { title: 'Home' },
           },
           {
-            path: 'articles',
-            name: 'articles',
-            component: () => import('@/views/public/ArticlesView.vue'),
-            meta: { title: 'Articles' },
-          },
-          {
-            path: 'articles/:id',
+            path: 'article/view/:id',
             name: 'article-detail',
             component: () => import('@/views/public/ArticleDetailView.vue'),
             meta: { title: 'Article' },
           },
           {
-            path: 'archive',
+            path: 'article/view/:id/:galleyId',
+            name: 'article-galley',
+            component: () => import('@/views/public/ArticleDetailView.vue'),
+            meta: { title: 'Article' },
+          },
+          {
+            path: 'issue/archive',
             name: 'archive',
             component: () => import('@/views/public/ArchiveView.vue'),
             meta: { title: 'Archive' },
           },
           {
-            path: 'archive/:volumeId/issues/:issueId',
+            path: 'issue/current',
+            name: 'issue-current',
+            component: () => import('@/views/public/ArchiveView.vue'),
+            meta: { title: 'Current Issue' },
+          },
+          {
+            path: 'issue/view/:issueId',
             name: 'issue',
             component: () => import('@/views/public/IssueView.vue'),
             meta: { title: 'Issue' },
           },
           {
-            path: 'editorial-board',
+            path: 'about',
+            name: 'about',
+            component: () => import('@/views/public/StaticPageView.vue'),
+            props: () => ({ slug: 'about' }),
+            meta: { title: 'About' },
+          },
+          {
+            path: 'about/editorialTeam',
             name: 'editorial-board',
             component: () => import('@/views/public/EditorialBoardView.vue'),
             meta: { title: 'Editorial Board' },
           },
           {
-            path: 'contact',
+            path: 'about/contact',
             name: 'contact',
             component: () => import('@/views/public/ContactView.vue'),
             meta: { title: 'Contact' },
+          },
+          {
+            path: 'about/submissions',
+            name: 'submissions',
+            component: () => import('@/views/public/StaticPageView.vue'),
+            props: () => ({ slug: 'author-guidelines' }),
+            meta: { title: 'Submissions' },
+          },
+          {
+            path: 'about/editorialPolicies',
+            name: 'editorial-policies',
+            component: () => import('@/views/public/StaticPageView.vue'),
+            props: () => ({ slug: 'peer-review' }),
+            meta: { title: 'Editorial Policies' },
+          },
+          {
+            path: 'about/privacy',
+            name: 'privacy',
+            component: () => import('@/views/public/StaticPageView.vue'),
+            props: () => ({ slug: 'privacy' }),
+            meta: { title: 'Privacy Statement' },
+          },
+          {
+            path: 'about/aboutThisPublishingSystem',
+            redirect: (to) => ({ path: `/${to.params.journalSlug}/about` }),
+          },
+
+          // Articles browse — kept at /articles since OJS doesn't have a
+          // direct equivalent (OJS only has search). Listed in sitemap.
+          {
+            path: 'articles',
+            name: 'articles',
+            component: () => import('@/views/public/ArticlesView.vue'),
+            meta: { title: 'Articles' },
           },
           {
             path: 'search',
@@ -76,6 +129,31 @@ const routes: RouteRecordRaw[] = [
             path: 'pages/:slug',
             name: 'static-page',
             component: () => import('@/views/public/StaticPageView.vue'),
+          },
+
+          // ── Legacy redirects ──
+          // Old non-OJS URLs that may still be linked from external sites or
+          // bookmarks. Browser-side 301-equivalent redirect to the canonical
+          // OJS form.
+          {
+            path: 'articles/:id',
+            redirect: (to) => ({ path: `/${to.params.journalSlug}/article/view/${to.params.id}`, query: to.query, hash: to.hash }),
+          },
+          {
+            path: 'archive',
+            redirect: (to) => ({ path: `/${to.params.journalSlug}/issue/archive` }),
+          },
+          {
+            path: 'archive/:volumeId/issues/:issueId',
+            redirect: (to) => ({ path: `/${to.params.journalSlug}/issue/view/${to.params.issueId}` }),
+          },
+          {
+            path: 'editorial-board',
+            redirect: (to) => ({ path: `/${to.params.journalSlug}/about/editorialTeam` }),
+          },
+          {
+            path: 'contact',
+            redirect: (to) => ({ path: `/${to.params.journalSlug}/about/contact` }),
           },
         ],
       },
@@ -350,8 +428,12 @@ const RESERVED_TOP_LEVEL = new Set([
 ])
 
 // Old (non-slugged) public paths that should redirect to the slug-prefixed
-// equivalent. Match the first segment.
+// equivalent. Match the first segment. Includes both the legacy URLs and
+// the new OJS-canonical first segments (article, issue, about, index).
 const PUBLIC_TOP_SEGMENTS = new Set([
+  // OJS-canonical
+  'article', 'issue', 'about', 'index',
+  // Legacy public pages
   'articles', 'archive', 'editorial-board', 'contact', 'search',
   'conferences', 'pages',
 ])
@@ -377,9 +459,9 @@ router.beforeEach(async (to, _from, next) => {
 
   const path = to.path
 
-  // "/" → "/{slug}"
+  // "/" → "/{slug}/index" (OJS-canonical home)
   if (path === '/') {
-    return next({ path: `/${slug}${to.hash || ''}`, query: to.query, replace: true })
+    return next({ path: `/${slug}/index${to.hash || ''}`, query: to.query, replace: true })
   }
 
   // Detect first path segment and decide redirection
@@ -405,7 +487,7 @@ router.beforeEach(async (to, _from, next) => {
 
   // Redirect authenticated users away from guest-only pages
   if (to.meta.guestOnly && isAuthenticated) {
-    return next({ path: `/${slug}` })
+    return next({ path: `/${slug}/index` })
   }
 
   // Require authentication

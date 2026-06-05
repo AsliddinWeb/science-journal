@@ -54,7 +54,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 3. Archive -->
     <RouterLink
-      to="/archive"
+      to="/issue/archive"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -74,7 +74,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 5. Editorial Board -->
     <RouterLink
-      to="/editorial-board"
+      to="/about/editorialTeam"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -124,7 +124,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 9. Contact -->
     <RouterLink
-      to="/contact"
+      to="/about/contact"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -145,7 +145,7 @@ const sortedVolumes = computed(() =>
         <RouterLink
           v-for="iss in v.issues"
           :key="iss.id"
-          :to="`/archive/${v.id}/issues/${iss.id}`"
+          :to="`/issue/view/${iss.id}`"
           class="block py-1 text-xs text-slate-600 hover:text-primary-600 dark:text-slate-400"
         >
           📄 Issue {{ iss.number }}
