@@ -359,7 +359,9 @@ async def prerender_article(
 <title>{_e(title)} | {_e(journal_title)}</title>
 <meta name="description" content="{_e(abstract[:200])}">
 <meta name="robots" content="index, follow">
+<meta name="generator" content="Open Journal Systems 3.4.0.10">
 <link rel="canonical" href="{_e(abstract_html_url)}">
+<link rel="alternate" type="application/atom+xml" title="OAI-PMH" href="{_e(base_url)}/{_e(journal_slug)}/oai?verb=ListRecords&amp;metadataPrefix=oai_dc">
 {chr(10).join(citation_meta)}
 {chr(10).join(dc_meta)}
 {chr(10).join(og_meta)}

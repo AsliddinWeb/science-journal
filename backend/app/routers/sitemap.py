@@ -95,7 +95,11 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
 
 
 @router.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
-async def robots() -> PlainTextResponse:
+async def robots(db: AsyncSession = Depends(get_db)) -> PlainTextResponse:
+    hs_result = await db.execute(
+        select(HomeSettings.journal_slug).where(HomeSettings.id == "default")
+    )
+    journal_slug = hs_result.scalar_one_or_none() or "academic-book-journal"
     content = f"""User-agent: *
 Allow: /
 Disallow: /admin
@@ -104,5 +108,8 @@ Disallow: /author
 Disallow: /reviewer
 
 Sitemap: {SITE_URL}/sitemap.xml
+
+# OAI-PMH harvesting endpoint (Scholar, DOAJ, Crossref)
+# Identify: {SITE_URL}/{journal_slug}/oai?verb=Identify
 """
     return PlainTextResponse(content=content)

@@ -14,6 +14,7 @@ from app.routers import (
 from app.routers import sitemap as sitemap_router
 from app.routers import og_image as og_image_router
 from app.routers import prerender as prerender_router
+from app.routers import oai as oai_router
 import logging
 
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
@@ -66,6 +67,7 @@ app.include_router(indexing.router)
 app.include_router(sitemap_router.router)
 app.include_router(og_image_router.router)
 app.include_router(prerender_router.router)
+app.include_router(oai_router.router)
 
 # Serve uploaded files
 _uploads_dir = Path(__file__).resolve().parents[1] / "uploads"
