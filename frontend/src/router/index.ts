@@ -130,31 +130,13 @@ const routes: RouteRecordRaw[] = [
             name: 'static-page',
             component: () => import('@/views/public/StaticPageView.vue'),
           },
-
-          // ── Legacy redirects ──
-          // Old non-OJS URLs that may still be linked from external sites or
-          // bookmarks. Browser-side 301-equivalent redirect to the canonical
-          // OJS form.
-          {
-            path: 'articles/:id',
-            redirect: (to) => ({ path: `/${to.params.journalSlug}/article/view/${to.params.id}`, query: to.query, hash: to.hash }),
-          },
-          {
-            path: 'archive',
-            redirect: (to) => ({ path: `/${to.params.journalSlug}/issue/archive` }),
-          },
-          {
-            path: 'archive/:volumeId/issues/:issueId',
-            redirect: (to) => ({ path: `/${to.params.journalSlug}/issue/view/${to.params.issueId}` }),
-          },
-          {
-            path: 'editorial-board',
-            redirect: (to) => ({ path: `/${to.params.journalSlug}/about/editorialTeam` }),
-          },
-          {
-            path: 'contact',
-            redirect: (to) => ({ path: `/${to.params.journalSlug}/about/contact` }),
-          },
+          // Legacy paths (articles/<id>, archive/...) are NOT added here as
+          // route-level redirects on purpose: a redirect under :journalSlug
+          // wouldn't know the real slug if the URL came in without one
+          // (the :journalSlug param would bind to the literal first segment
+          // like 'articles' or 'about' and the redirect would loop). All
+          // legacy → OJS-canonical mapping is done in beforeEach below,
+          // where the configured slug is always available from siteInfo.
         ],
       },
     ],
@@ -423,20 +405,47 @@ const router = createRouter({
 // Top-level segments that are NOT journal slugs (must never be mistaken for one).
 const RESERVED_TOP_LEVEL = new Set([
   'admin', 'author', 'reviewer', 'login', 'register',
-  'verify-email', 'email-confirmed',
-  'api', 'sitemap.xml', 'robots.txt', 'prerender',
+  'verify-email', 'email-confirmed', 'error',
+  'api', 'sitemap.xml', 'robots.txt', 'prerender', 'oai',
 ])
 
-// Old (non-slugged) public paths that should redirect to the slug-prefixed
-// equivalent. Match the first segment. Includes both the legacy URLs and
-// the new OJS-canonical first segments (article, issue, about, index).
+// First-segments that look like a slug to Vue Router's :journalSlug param
+// but are really OJS path components or legacy public paths. When we see
+// one of these as the first URL segment, we know the slug was missing and
+// we prepend it.
 const PUBLIC_TOP_SEGMENTS = new Set([
-  // OJS-canonical
+  // OJS-canonical first segments
   'article', 'issue', 'about', 'index',
-  // Legacy public pages
+  // Legacy public first segments
   'articles', 'archive', 'editorial-board', 'contact', 'search',
   'conferences', 'pages',
 ])
+
+// Map legacy URL shapes to their OJS-canonical equivalent. `segs` is the
+// path split on '/' with the slug already stripped, so for the URL
+// `/fif/articles/abc` we receive segs = ['articles', 'abc']. Returns the
+// new segments array (under the slug) or null when no rewrite applies.
+function rewriteLegacy(segs: string[]): string[] | null {
+  if (segs.length === 2 && segs[0] === 'articles') {
+    // /<slug>/articles/<id> → /<slug>/article/view/<id>
+    return ['article', 'view', segs[1]]
+  }
+  if (segs.length === 1 && segs[0] === 'archive') {
+    // /<slug>/archive → /<slug>/issue/archive
+    return ['issue', 'archive']
+  }
+  if (segs.length === 4 && segs[0] === 'archive' && segs[2] === 'issues') {
+    // /<slug>/archive/<volumeId>/issues/<issueId> → /<slug>/issue/view/<issueId>
+    return ['issue', 'view', segs[3]]
+  }
+  if (segs.length === 1 && segs[0] === 'editorial-board') {
+    return ['about', 'editorialTeam']
+  }
+  if (segs.length === 1 && segs[0] === 'contact') {
+    return ['about', 'contact']
+  }
+  return null
+}
 
 // Navigation guards
 router.beforeEach(async (to, _from, next) => {
@@ -459,27 +468,51 @@ router.beforeEach(async (to, _from, next) => {
 
   const path = to.path
 
-  // "/" → "/{slug}/index" (OJS-canonical home)
+  // "/" → "/{slug}/index" (OJS-canonical home, single hop)
   if (path === '/') {
     return next({ path: `/${slug}/index${to.hash || ''}`, query: to.query, replace: true })
   }
 
-  // Detect first path segment and decide redirection
-  const firstSeg = path.split('/').filter(Boolean)[0] || ''
+  const segs = path.split('/').filter(Boolean)
+  const firstSeg = segs[0] || ''
 
-  // Old public path without slug → prepend slug
-  // e.g. /articles/abc-123 → /{slug}/articles/abc-123
+  // No-slug public URL: prepend slug, and apply any legacy → OJS rewrite
+  // in the same hop so we converge on the canonical form immediately.
   if (PUBLIC_TOP_SEGMENTS.has(firstSeg)) {
-    return next({ path: `/${slug}${path}${to.hash || ''}`, query: to.query, replace: true })
+    const rewritten = rewriteLegacy(segs)
+    const newSegs = rewritten ?? segs
+    return next({
+      path: `/${slug}/${newSegs.join('/')}${to.hash || ''}`,
+      query: to.query,
+      replace: true,
+    })
   }
 
-  // If first segment is a journal slug that doesn't match current configured
-  // slug (e.g. user has bookmarked the old slug), redirect to the new one.
+  // Already slug-prefixed: detect legacy paths inside the slug and rewrite
+  // to the OJS form (e.g. /fif/articles/abc → /fif/article/view/abc).
+  if (firstSeg === slug && segs.length >= 2) {
+    const rewritten = rewriteLegacy(segs.slice(1))
+    if (rewritten) {
+      return next({
+        path: `/${slug}/${rewritten.join('/')}${to.hash || ''}`,
+        query: to.query,
+        replace: true,
+      })
+    }
+  }
+
+  // Bare /<slug> (no trailing /index) → land on /index
+  if (firstSeg === slug && segs.length === 1) {
+    return next({ path: `/${slug}/index${to.hash || ''}`, query: to.query, replace: true })
+  }
+
+  // Different slug than the configured one (e.g. user has bookmarked the
+  // old slug): swap to the configured slug, preserving the rest of the URL.
   if (
     firstSeg
     && !RESERVED_TOP_LEVEL.has(firstSeg)
-    && to.matched.some(r => r.path.startsWith('/:journalSlug'))
     && firstSeg !== slug
+    && to.matched.some(r => r.path.startsWith('/:journalSlug'))
   ) {
     const rest = path.slice(firstSeg.length + 1) // strip "/<wrongSlug>"
     return next({ path: `/${slug}${rest}${to.hash || ''}`, query: to.query, replace: true })

@@ -142,9 +142,9 @@ onMounted(load)
         <div class="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <!-- Breadcrumb -->
           <nav v-if="!loading" class="mb-4 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-            <RouterLink to="/" class="text-slate-400 hover:text-white">{{ t('nav.home') }}</RouterLink>
+            <RouterLink :to="`/${siteInfo.journalSlug}/index`" class="text-slate-400 hover:text-white">{{ t('nav.home') }}</RouterLink>
             <ChevronRight :size="14" class="text-slate-500" />
-            <RouterLink to="/issue/archive" class="text-slate-400 hover:text-white">{{ t('archive.title') }}</RouterLink>
+            <RouterLink :to="`/${siteInfo.journalSlug}/issue/archive`" class="text-slate-400 hover:text-white">{{ t('archive.title') }}</RouterLink>
             <ChevronRight :size="14" class="text-slate-500" />
             <span class="text-slate-200" v-if="volume && issue">
               Vol. {{ volume.number }}, Issue {{ issue.number }}

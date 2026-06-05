@@ -6,9 +6,16 @@ import {
   Archive as ArchiveIcon, Mail, Newspaper, Presentation,
 } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 import type { Volume } from '@/types/volume'
 
 const { t } = useI18n()
+const siteInfo = useSiteInfoStore()
+
+// All RouterLink targets are slug-prefixed so Vue Router's :journalSlug
+// param can't be tricked into matching a literal first segment ('issue',
+// 'about', etc.) and getting wedged in a redirect loop.
+const base = computed(() => `/${siteInfo.journalSlug}`)
 
 const volumes = ref<Volume[]>([])
 const openGroups = ref<Set<string>>(new Set(['info']))
@@ -34,7 +41,7 @@ const sortedVolumes = computed(() =>
   <aside class="w-full space-y-2">
     <!-- 1. Home -->
     <RouterLink
-      to="/"
+      :to="`${base}/index`"
       exact-active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -44,7 +51,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 2. Articles -->
     <RouterLink
-      to="/articles"
+      :to="`${base}/articles`"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -54,7 +61,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 3. Archive -->
     <RouterLink
-      to="/issue/archive"
+      :to="`${base}/issue/archive`"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -64,7 +71,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 4. Conferences -->
     <RouterLink
-      to="/conferences"
+      :to="`${base}/conferences`"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -74,7 +81,7 @@ const sortedVolumes = computed(() =>
 
     <!-- 5. Editorial Board -->
     <RouterLink
-      to="/about/editorialTeam"
+      :to="`${base}/about/editorialTeam`"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -95,11 +102,11 @@ const sortedVolumes = computed(() =>
         <ChevronDown :size="14" class="transition-transform" :class="{ 'rotate-180': openGroups.has('info') }" />
       </button>
       <div v-if="openGroups.has('info')" class="mt-1 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
-        <RouterLink to="/pages/about" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.about_journal') }}</RouterLink>
-        <RouterLink to="/pages/aims" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.aims_scope') }}</RouterLink>
-        <RouterLink to="/pages/indexing" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.indexing') }}</RouterLink>
-        <RouterLink to="/pages/open-access" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.open_access') }}</RouterLink>
-        <RouterLink to="/pages/privacy" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">Privacy</RouterLink>
+        <RouterLink :to="`${base}/pages/about`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.about_journal') }}</RouterLink>
+        <RouterLink :to="`${base}/pages/aims`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.aims_scope') }}</RouterLink>
+        <RouterLink :to="`${base}/pages/indexing`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.indexing') }}</RouterLink>
+        <RouterLink :to="`${base}/pages/open-access`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.open_access') }}</RouterLink>
+        <RouterLink :to="`${base}/pages/privacy`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">Privacy</RouterLink>
       </div>
     </div>
 
@@ -116,15 +123,15 @@ const sortedVolumes = computed(() =>
         <ChevronDown :size="14" class="transition-transform" :class="{ 'rotate-180': openGroups.has('authors') }" />
       </button>
       <div v-if="openGroups.has('authors')" class="mt-1 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
-        <RouterLink to="/pages/author-guidelines" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.author_guidelines') }}</RouterLink>
-        <RouterLink to="/pages/review-process" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.review_process') }}</RouterLink>
-        <RouterLink to="/pages/plagiarism" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">Plagiarism</RouterLink>
+        <RouterLink :to="`${base}/pages/author-guidelines`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.author_guidelines') }}</RouterLink>
+        <RouterLink :to="`${base}/pages/review-process`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">{{ t('nav.review_process') }}</RouterLink>
+        <RouterLink :to="`${base}/pages/plagiarism`" class="block py-1 text-slate-700 hover:text-primary-600 dark:text-slate-300">Plagiarism</RouterLink>
       </div>
     </div>
 
     <!-- 9. Contact -->
     <RouterLink
-      to="/about/contact"
+      :to="`${base}/about/contact`"
       active-class="!bg-primary-700 !text-white"
       class="flex items-center gap-3 rounded-lg bg-journal-900 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-journal-800"
     >
@@ -145,7 +152,7 @@ const sortedVolumes = computed(() =>
         <RouterLink
           v-for="iss in v.issues"
           :key="iss.id"
-          :to="`/issue/view/${iss.public_id ?? iss.id}`"
+          :to="`${base}/issue/view/${iss.public_id ?? iss.id}`"
           class="block py-1 text-xs text-slate-600 hover:text-primary-600 dark:text-slate-400"
         >
           📄 Issue {{ iss.number }}

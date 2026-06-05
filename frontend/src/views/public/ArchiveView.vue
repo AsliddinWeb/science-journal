@@ -4,16 +4,18 @@ import { useI18n } from 'vue-i18n'
 import { BookOpen, ChevronDown, ChevronRight, Calendar, FileText, AlertCircle, RefreshCw } from 'lucide-vue-next'
 import { api } from '@/composables/useApi'
 import CoverImage from '@/components/ui/CoverImage.vue'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 import type { Volume } from '@/types/volume'
 import { formatDateShort } from '@/utils/formatDate'
 import { useSeoMeta } from '@/composables/useSeoMeta'
 
 const { t } = useI18n()
+const siteInfo = useSiteInfoStore()
 
 useSeoMeta({
   title: t('nav.archive') || 'Archive',
-  canonical: `${window.location.origin}/archive`,
-  ogUrl: `${window.location.origin}/archive`,
+  canonical: `${window.location.origin}/${siteInfo.journalSlug}/issue/archive`,
+  ogUrl: `${window.location.origin}/${siteInfo.journalSlug}/issue/archive`,
 })
 const volumes = ref<Volume[]>([])
 const loading = ref(true)
@@ -141,7 +143,7 @@ function toggleVolume(id: string) {
               <RouterLink
                 v-for="issue in volume.issues"
                 :key="issue.id"
-                :to="`/issue/view/${issue.public_id ?? issue.id}`"
+                :to="`/${siteInfo.journalSlug}/issue/view/${issue.public_id ?? issue.id}`"
                 class="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
               >
                 <div class="flex items-center gap-3">

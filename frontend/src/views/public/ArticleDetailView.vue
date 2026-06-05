@@ -374,9 +374,9 @@ const pdfHref = computed(() => {
     <template v-else-if="article">
       <!-- Breadcrumb -->
       <nav class="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-        <RouterLink to="/" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.home') }}</RouterLink>
+        <RouterLink :to="`/${siteInfo.journalSlug}/index`" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.home') }}</RouterLink>
         <ChevronRight :size="14" />
-        <RouterLink to="/issue/archive" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.archive') }}</RouterLink>
+        <RouterLink :to="`/${siteInfo.journalSlug}/issue/archive`" class="hover:text-primary-700 dark:hover:text-primary-300">{{ t('nav.archive') }}</RouterLink>
         <ChevronRight :size="14" />
         <span class="truncate text-journal-800 dark:text-primary-300 max-w-xs">{{ t('nav.articles') }}</span>
       </nav>

@@ -64,18 +64,23 @@ function getInitials(name: string): string {
   return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
+// All internal nav targets are slug-prefixed to keep Vue Router's
+// :journalSlug param from greedily matching literal first segments
+// ('about', 'issue', 'article', …) and tripping a redirect loop.
+const base = computed(() => `/${siteInfo.journalSlug}`)
+
 const forAuthorsLinks = computed(() => [
-  { to: '/pages/author-guidelines', icon: FileText, label: t('nav.author_guidelines') },
-  { to: '/pages/review-process', icon: Shield, label: t('nav.review_process') },
-  { to: '/pages/open-access', icon: Globe2, label: t('nav.open_access') },
+  { to: `${base.value}/pages/author-guidelines`, icon: FileText, label: t('nav.author_guidelines') },
+  { to: `${base.value}/pages/review-process`,    icon: Shield,   label: t('nav.review_process') },
+  { to: `${base.value}/pages/open-access`,       icon: Globe2,   label: t('nav.open_access') },
 ])
 
 const aboutLinks = computed(() => [
-  { to: '/about', icon: Info, label: t('nav.about_journal') },
-  { to: '/pages/aims', icon: BookMarked, label: t('nav.aims_scope') },
-  { to: '/about/editorialTeam', icon: Users, label: t('nav.editorial') },
-  { to: '/about/contact', icon: Globe2, label: t('nav.contact') },
-  { to: '/pages/indexing', icon: Globe2, label: t('nav.indexing') },
+  { to: `${base.value}/about`,                 icon: Info,     label: t('nav.about_journal') },
+  { to: `${base.value}/pages/aims`,            icon: BookMarked, label: t('nav.aims_scope') },
+  { to: `${base.value}/about/editorialTeam`,   icon: Users,    label: t('nav.editorial') },
+  { to: `${base.value}/about/contact`,         icon: Globe2,   label: t('nav.contact') },
+  { to: `${base.value}/pages/indexing`,        icon: Globe2,   label: t('nav.indexing') },
 ])
 
 const isActive = (path: string) => route.path.startsWith(path)
@@ -124,21 +129,21 @@ const isActive = (path: string) => route.path.startsWith(path)
         <ul class="hidden items-center gap-0.5">
           <li>
             <RouterLink
-              to="/articles"
+              :to="`${base}/articles`"
               class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
               active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300"
             >{{ t('nav.articles') }}</RouterLink>
           </li>
           <li>
             <RouterLink
-              to="/issue/archive"
+              :to="`${base}/issue/archive`"
               class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
               active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300"
             >{{ t('nav.archive') }}</RouterLink>
           </li>
           <li>
             <RouterLink
-              to="/conferences"
+              :to="`${base}/conferences`"
               class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
               active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300"
             >{{ t('nav.conferences') }}</RouterLink>
@@ -219,7 +224,7 @@ const isActive = (path: string) => route.path.startsWith(path)
         <!-- Right side -->
         <div class="flex items-center gap-1.5">
           <RouterLink
-            to="/search"
+            :to="`${base}/search`"
             class="rounded-lg p-2 text-primary-300/80 transition-colors hover:bg-white/10 hover:text-primary-200"
             :title="t('common.search')"
           >
@@ -341,17 +346,17 @@ const isActive = (path: string) => route.path.startsWith(path)
               </RouterLink>
             </li>
             <li>
-              <RouterLink to="/articles" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <RouterLink :to="`${base}/articles`" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 {{ t('nav.articles') }}
               </RouterLink>
             </li>
             <li>
-              <RouterLink to="/issue/archive" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <RouterLink :to="`${base}/issue/archive`" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 {{ t('nav.archive') }}
               </RouterLink>
             </li>
             <li>
-              <RouterLink to="/conferences" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <RouterLink :to="`${base}/conferences`" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 {{ t('nav.conferences') }}
               </RouterLink>
             </li>
@@ -388,7 +393,7 @@ const isActive = (path: string) => route.path.startsWith(path)
               </RouterLink>
             </li>
             <li class="border-t border-slate-100 mt-1 pt-1 dark:border-slate-800">
-              <RouterLink to="/about/contact" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <RouterLink :to="`${base}/about/contact`" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800" active-class="bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 {{ t('nav.contact') }}
               </RouterLink>
             </li>

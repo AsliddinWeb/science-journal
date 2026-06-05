@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { BadgeCheck, Calendar, Eye, Download, BookOpen, Hash } from 'lucide-vue-next'
 import type { Article } from '@/types/article'
 import { useLocaleStore } from '@/stores/locale'
+import { useSiteInfoStore } from '@/stores/siteInfo'
 import { getLocalizedField } from '@/utils/truncate'
 import { formatDateShort } from '@/utils/formatDate'
 
@@ -14,6 +15,13 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const localeStore = useLocaleStore()
+const siteInfo = useSiteInfoStore()
+
+// Slug-prefixed article URL — never bare /article/view/... (Vue Router's
+// :journalSlug param would otherwise grab 'article' as the slug).
+const articleHref = computed(() =>
+  `/${siteInfo.journalSlug}/article/view/${props.article.public_id ?? props.article.id}`
+)
 
 const title = computed(() =>
   getLocalizedField(props.article.title, localeStore.current, 'Untitled')
@@ -62,7 +70,7 @@ const downloadHref = computed(() => {
   <article class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-primary-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
     <!-- Header: title + accent icon -->
     <RouterLink
-      :to="`/article/view/${article.public_id ?? article.id}`"
+      :to="articleHref"
       class="block border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-700 dark:bg-slate-800/60"
     >
       <h3
@@ -113,7 +121,7 @@ const downloadHref = computed(() => {
         </span>
 
         <RouterLink
-          :to="`/article/view/${article.public_id ?? article.id}`"
+          :to="articleHref"
           class="inline-flex items-center gap-1 rounded-md bg-sky-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-sky-600"
         >
           <Eye :size="11" />
