@@ -276,6 +276,9 @@ async def prerender_article(
         dc_meta.append(f'<meta name="DC.Creator.PersonalName" content="{_e(a["name"])}">')
     if iso_created:
         dc_meta.append(f'<meta name="DC.Date.created" scheme="ISO8601" content="{_e(iso_created)}">')
+    iso_submitted = article.submission_date.strftime("%Y-%m-%d") if getattr(article, "submission_date", None) else ""
+    if iso_submitted:
+        dc_meta.append(f'<meta name="DC.Date.dateSubmitted" scheme="ISO8601" content="{_e(iso_submitted)}">')
     if iso_pub_date:
         dc_meta.append(f'<meta name="DC.Date.issued" scheme="ISO8601" content="{_e(iso_pub_date)}">')
     if iso_updated:
@@ -284,7 +287,10 @@ async def prerender_article(
         dc_meta.append(f'<meta name="DC.Description" xml:lang="{k}" content="{_e(v)}">')
     if pdf_url:
         dc_meta.append('<meta name="DC.Format" scheme="IMT" content="application/pdf">')
-    dc_meta.append(f'<meta name="DC.Identifier" content="{_e(str(article.id))}">')
+    # Identifier — short public_id (OJS-style "1273"), with the UUID kept
+    # alongside so harvesters that cached the legacy id can still match.
+    dc_meta.append(f'<meta name="DC.Identifier" content="{_e(str(article.public_id))}">')
+    dc_meta.append(f'<meta name="DC.Identifier.UUID" content="{_e(str(article.id))}">')
     if article.pages:
         dc_meta.append(f'<meta name="DC.Identifier.pageNumber" content="{_e(article.pages)}">')
     if article.doi:
@@ -371,6 +377,7 @@ async def prerender_article(
 <meta name="robots" content="index, follow">
 <meta name="generator" content="Open Journal Systems 3.4.0.10">
 <link rel="canonical" href="{_e(abstract_html_url)}">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
 <link rel="alternate" type="application/atom+xml" title="OAI-PMH" href="{_e(base_url)}/{_e(journal_slug)}/oai?verb=ListRecords&amp;metadataPrefix=oai_dc">
 {chr(10).join(citation_meta)}
 {chr(10).join(dc_meta)}
