@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   BookOpen, Calendar, FileText, ChevronRight,
@@ -19,6 +19,7 @@ interface Category { id: string; slug: string; name_uz: string; name_ru: string;
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const localeStore = useLocaleStore()
 const siteInfo = useSiteInfoStore()
 
@@ -83,6 +84,16 @@ async function load() {
     const issueData = await api.get<IssueDetail>(`/api/issues/${issueId.value}`)
     issue.value = issueData
     volume.value = issueData.volume ?? null
+    // If the URL used the legacy UUID, replace it with the canonical short
+    // public_id so reloads/shares converge on the OJS form.
+    const pid = (issueData as any).public_id
+    if (pid != null && String(pid) !== issueId.value) {
+      router.replace({
+        path: `/${siteInfo.journalSlug}/issue/view/${pid}`,
+        query: route.query,
+        hash: route.hash,
+      })
+    }
     const [articlesData, categoriesData] = await Promise.all([
       api.get<PaginatedResponse<Article>>(
         `/api/articles?issue_id=${issueData.id}&page=1&limit=500&status=published&sort=pages`

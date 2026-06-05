@@ -245,12 +245,23 @@ async function load() {
       api.get<HomeSettingsData>('/api/home-settings').then(hs => { homeSettings.value = hs }).catch(() => {})
     }
     article.value = await api.get<Article>(`/api/articles/${articleId.value}`)
-    api.post(`/api/articles/${articleId.value}/view`).catch(() => {})
+    // If the URL used the legacy UUID (or any non-canonical form), swap it
+    // for the short public_id without adding a history entry — so reloads
+    // and shares converge on the canonical OJS URL.
+    const pid = (article.value as any).public_id
+    if (pid != null && String(pid) !== articleId.value) {
+      router.replace({
+        path: `/${siteInfo.journalSlug}/article/view/${pid}`,
+        query: route.query,
+        hash: route.hash,
+      })
+    }
+    api.post(`/api/articles/${article.value.id}/view`).catch(() => {})
     if (article.value.category_id) {
       const res = await api.get<PaginatedResponse<Article>>(
         `/api/articles?category_id=${article.value.category_id}&limit=3&status=published`
       )
-      related.value = res.items.filter((a) => a.id !== articleId.value).slice(0, 3)
+      related.value = res.items.filter((a) => a.id !== article.value!.id).slice(0, 3)
     }
   } catch (e: any) {
     if (e?.response?.status === 404) router.replace({ name: 'not-found' })
