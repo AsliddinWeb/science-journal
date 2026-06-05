@@ -101,11 +101,19 @@ async def prerender_article(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Static HTML view of a published article for crawlers."""
+    """Static HTML view of a published article for crawlers.
+
+    Accepts either the short integer public_id (OJS-style) or the legacy UUID
+    so existing inbound links from search indexers keep resolving.
+    """
+    import uuid as _uuid
     try:
-        article_uuid = __import__("uuid").UUID(article_id)
+        where = Article.public_id == int(article_id)
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+        try:
+            where = Article.id == _uuid.UUID(article_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
 
     result = await db.execute(
         select(Article)
@@ -115,7 +123,7 @@ async def prerender_article(
             selectinload(Article.volume),
             selectinload(Article.issue),
         )
-        .where(Article.id == article_uuid, Article.status == ArticleStatus.published)
+        .where(where, Article.status == ArticleStatus.published)
     )
     article = result.scalar_one_or_none()
     if not article:
@@ -174,11 +182,11 @@ async def prerender_article(
         else:
             firstpage = article.pages.strip()
 
-    # URLs — OJS-style canonical path (`/{slug}/article/view/{id}`). The
-    # legacy `/{slug}/articles/{id}` form 301-redirects to this on the
-    # frontend, so old links still work.
+    # URLs — OJS-style canonical path uses the short integer public_id
+    # (`/{slug}/article/view/{n}`). The UUID-based path is kept resolvable
+    # for backward compatibility but is no longer the canonical form.
     base_url = str(settings.APP_URL).rstrip("/") if settings.APP_URL else f"{request.url.scheme}://{request.url.netloc}"
-    abstract_html_url = f"{base_url}/{journal_slug}/article/view/{article.id}"
+    abstract_html_url = f"{base_url}/{journal_slug}/article/view/{article.public_id}"
     pdf_url = ""
     if article.pdf_file_path:
         p = article.pdf_file_path

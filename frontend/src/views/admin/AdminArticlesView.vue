@@ -249,7 +249,7 @@ function reviewCount(row: Article) {
               </td>
               <td class="max-w-xs px-4 py-3">
                 <RouterLink
-                  :to="`/article/view/${article.id}`"
+                  :to="`/article/view/${article.public_id ?? article.id}`"
                   class="line-clamp-1 font-medium text-slate-800 hover:text-primary-600 dark:text-slate-200 dark:hover:text-primary-400"
                 >
                   {{ (getLocalizedField(article.title, localeStore.current) || '').slice(0, 60) || t('common.untitled') }}
@@ -278,7 +278,7 @@ function reviewCount(row: Article) {
               <td class="px-4 py-3">
                 <div class="flex items-center gap-1.5">
                   <RouterLink
-                    :to="`/article/view/${article.id}`"
+                    :to="`/article/view/${article.public_id ?? article.id}`"
                     class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
                     :title="t('common.view')"
                   >

@@ -143,11 +143,17 @@ async def _load_articles(
         .order_by(Article.published_date.desc().nulls_last(), Article.created_at.desc())
     )
     if only_id:
+        # OAI identifiers carry either the short integer public_id (new) or
+        # the legacy UUID. We accept both so external harvesters that cached
+        # the old form keep resolving.
         try:
-            import uuid as _uuid
-            q = q.where(Article.id == _uuid.UUID(only_id))
+            q = q.where(Article.public_id == int(only_id))
         except ValueError:
-            return []
+            try:
+                import uuid as _uuid
+                q = q.where(Article.id == _uuid.UUID(only_id))
+            except ValueError:
+                return []
     else:
         q = q.offset(offset).limit(limit)
     res = await db.execute(q)
@@ -156,8 +162,10 @@ async def _load_articles(
 
 # ─── record rendering ────────────────────────────────────────────────────────
 
-def _oai_identifier(repo_id: str, article_id: str) -> str:
-    return f"oai:{repo_id}:article/{article_id}"
+def _oai_identifier(repo_id: str, article_public_id: int | str) -> str:
+    """Build the OAI record identifier. We use the short integer public_id
+    so the identifier looks like OJS's (e.g. oai:host:article/42)."""
+    return f"oai:{repo_id}:article/{article_public_id}"
 
 
 def _article_authors(article: Article) -> list[dict[str, str]]:
@@ -187,7 +195,7 @@ def _build_oai_dc(article: Article, cfg: dict, base_url: str) -> str:
     keywords = _flatten(article.keywords)
     authors = _article_authors(article)
     lang = getattr(article.language, "value", str(article.language)) if article.language else "en"
-    abstract_url = f"{base_url}/{cfg['journal_slug']}/article/view/{article.id}"  # OJS-canonical
+    abstract_url = f"{base_url}/{cfg['journal_slug']}/article/view/{article.public_id}"  # OJS-canonical
 
     pdf_path = article.pdf_file_path or ""
     if pdf_path:
@@ -282,7 +290,7 @@ def _render_record(article: Article, cfg: dict, base_url: str, repo_id: str) -> 
     pub_dt = article.published_date or article.updated_at or article.created_at
     header = (
         "<header>"
-        f"<identifier>{_e(_oai_identifier(repo_id, str(article.id)))}</identifier>"
+        f"<identifier>{_e(_oai_identifier(repo_id, article.public_id))}</identifier>"
         f"<datestamp>{_oai_datetime(pub_dt)}</datestamp>"
         "<setSpec>articles</setSpec>"
         "</header>"
@@ -295,7 +303,7 @@ def _render_identifier(article: Article, repo_id: str) -> str:
     pub_dt = article.published_date or article.updated_at or article.created_at
     return (
         "<header>"
-        f"<identifier>{_e(_oai_identifier(repo_id, str(article.id)))}</identifier>"
+        f"<identifier>{_e(_oai_identifier(repo_id, article.public_id))}</identifier>"
         f"<datestamp>{_oai_datetime(pub_dt)}</datestamp>"
         "<setSpec>articles</setSpec>"
         "</header>"
@@ -346,7 +354,7 @@ def _verb_identify(request_url: str, params: dict[str, str], cfg: dict, repo_id:
         '<scheme>oai</scheme>'
         f'<repositoryIdentifier>{_e(repo_id)}</repositoryIdentifier>'
         '<delimiter>:</delimiter>'
-        f'<sampleIdentifier>oai:{_e(repo_id)}:article/00000000-0000-0000-0000-000000000000</sampleIdentifier>'
+        f'<sampleIdentifier>oai:{_e(repo_id)}:article/1</sampleIdentifier>'
         '</oai-identifier>'
         '</description>'
         "</Identify>"

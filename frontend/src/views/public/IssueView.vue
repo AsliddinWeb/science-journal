@@ -77,22 +77,24 @@ async function load() {
   loading.value = true
   error.value = false
   try {
-    // Fetch the issue (with its parent volume embedded), the issue's
-    // articles, and categories in parallel.
-    const [issueData, articlesData, categoriesData] = await Promise.all([
-      api.get<IssueDetail>(`/api/issues/${issueId.value}`),
+    // The URL carries either an integer public_id or a UUID; the issues
+    // endpoint accepts both. The articles endpoint only accepts the UUID,
+    // so we resolve the issue first and then fan out the rest in parallel.
+    const issueData = await api.get<IssueDetail>(`/api/issues/${issueId.value}`)
+    issue.value = issueData
+    volume.value = issueData.volume ?? null
+    const [articlesData, categoriesData] = await Promise.all([
       api.get<PaginatedResponse<Article>>(
-        `/api/articles?issue_id=${issueId.value}&page=1&limit=500&status=published&sort=pages`
+        `/api/articles?issue_id=${issueData.id}&page=1&limit=500&status=published&sort=pages`
       ),
       api.get<Category[]>('/api/categories').catch(() => []),
     ])
-    issue.value = issueData
-    volume.value = issueData.volume ?? null
     articles.value = articlesData.items
     total.value = articlesData.total
     categories.value = categoriesData ?? []
     if (volume.value && issue.value) {
-      const canonical = `${window.location.origin}/${siteInfo.journalSlug}/issue/view/${issue.value.id}`
+      const idForUrl = (issue.value as any).public_id ?? issue.value.id
+      const canonical = `${window.location.origin}/${siteInfo.journalSlug}/issue/view/${idForUrl}`
       applySeo({
         title: `Vol. ${volume.value.number}, Issue ${issue.value.number} (${volume.value.year})`,
         ogUrl: canonical,

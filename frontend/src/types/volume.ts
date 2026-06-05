@@ -1,5 +1,6 @@
 export interface Issue {
   id: string
+  public_id: number  // short integer used in OJS-style URLs (/issue/view/<n>)
   volume_id: string
   number: number
   published_date?: string

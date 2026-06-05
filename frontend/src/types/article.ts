@@ -31,6 +31,7 @@ export interface ArticleAuthor {
 
 export interface Article {
   id: string
+  public_id: number  // short integer used in OJS-style URLs (/article/view/<n>)
   title: MultilingualField
   abstract: MultilingualField
   keywords: string[] | { uz?: string[]; ru?: string[]; en?: string[] }
@@ -60,7 +61,7 @@ export interface Article {
   author?: UserPublic
   co_authors: ArticleAuthor[]
   volume?: { id: string; number: number; year: number }
-  issue?: { id: string; number: number; published_date?: string }
+  issue?: { id: string; public_id?: number; number: number; published_date?: string }
   category?: { id: string; slug: string; name_uz: string; name_ru: string; name_en: string }
 }
 

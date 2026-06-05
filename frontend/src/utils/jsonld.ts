@@ -7,6 +7,7 @@ interface SiteBrand {
   siteName: string
   issn?: string
   logoUrl?: string
+  journalSlug?: string
 }
 
 function publisher(brand: SiteBrand) {
@@ -99,10 +100,10 @@ export function buildScholarlyArticle(article: Article, brand: SiteBrand = { sit
     ...(pageEnd ? { pageEnd } : {}),
     ...(article.pages && !pageStart ? { pagination: article.pages } : {}),
     keywords: normalizeKeywords(article.keywords).join(', '),
-    url: `${SITE_URL}/articles/${article.id}`,
+    url: `${SITE_URL}${brand.journalSlug ? '/' + brand.journalSlug : ''}/article/view/${(article as any).public_id ?? article.id}`,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${SITE_URL}/articles/${article.id}`,
+      '@id': `${SITE_URL}${brand.journalSlug ? '/' + brand.journalSlug : ''}/article/view/${(article as any).public_id ?? article.id}`,
     },
   }
 }

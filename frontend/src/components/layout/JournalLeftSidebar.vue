@@ -145,7 +145,7 @@ const sortedVolumes = computed(() =>
         <RouterLink
           v-for="iss in v.issues"
           :key="iss.id"
-          :to="`/issue/view/${iss.id}`"
+          :to="`/issue/view/${iss.public_id ?? iss.id}`"
           class="block py-1 text-xs text-slate-600 hover:text-primary-600 dark:text-slate-400"
         >
           📄 Issue {{ iss.number }}

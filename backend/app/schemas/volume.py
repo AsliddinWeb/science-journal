@@ -40,6 +40,7 @@ class IssueRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    public_id: int  # short integer used in OJS-style URLs (/issue/view/<n>)
     volume_id: UUID
     number: int
     published_date: Optional[date] = None

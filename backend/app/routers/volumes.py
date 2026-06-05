@@ -49,6 +49,7 @@ async def list_volumes(db: AsyncSession = Depends(get_db)) -> list:
             article_count = count_result.scalar_one()
             vol_dict["issues"].append({
                 "id": issue.id,
+                "public_id": issue.public_id,
                 "volume_id": issue.volume_id,
                 "number": issue.number,
                 "published_date": issue.published_date,
@@ -84,6 +85,7 @@ async def get_volume(volume_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -
         )
         issues_with_counts.append({
             "id": issue.id,
+            "public_id": issue.public_id,
             "volume_id": issue.volume_id,
             "number": issue.number,
             "published_date": issue.published_date,
@@ -174,6 +176,7 @@ async def update_volume(
         )
         issues_with_counts.append({
             "id": issue.id,
+            "public_id": issue.public_id,
             "volume_id": issue.volume_id,
             "number": issue.number,
             "published_date": issue.published_date,
@@ -235,6 +238,7 @@ async def create_issue(
 
     return {
         "id": issue.id,
+        "public_id": issue.public_id,
         "volume_id": issue.volume_id,
         "number": issue.number,
         "published_date": issue.published_date,
@@ -268,6 +272,7 @@ async def update_issue(
 
     return {
         "id": issue.id,
+        "public_id": issue.public_id,
         "volume_id": issue.volume_id,
         "number": issue.number,
         "published_date": issue.published_date,

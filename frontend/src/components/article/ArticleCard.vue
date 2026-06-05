@@ -62,7 +62,7 @@ const downloadHref = computed(() => {
   <article class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-primary-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
     <!-- Header: title + accent icon -->
     <RouterLink
-      :to="`/article/view/${article.id}`"
+      :to="`/article/view/${article.public_id ?? article.id}`"
       class="block border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-700 dark:bg-slate-800/60"
     >
       <h3
@@ -113,7 +113,7 @@ const downloadHref = computed(() => {
         </span>
 
         <RouterLink
-          :to="`/article/view/${article.id}`"
+          :to="`/article/view/${article.public_id ?? article.id}`"
           class="inline-flex items-center gap-1 rounded-md bg-sky-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-sky-600"
         >
           <Eye :size="11" />

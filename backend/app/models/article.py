@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
+import sqlalchemy as sa
 from sqlalchemy import (
     String, Text, Boolean, DateTime, Enum, Integer,
     ForeignKey, func, Index
@@ -31,6 +32,16 @@ class Article(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # Short integer id used in public URLs (OJS-style /article/view/<n>).
+    # The DB sequence is created by migration 017; new rows get the next
+    # value via the server-side DEFAULT, so callers do not need to set it.
+    public_id: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        unique=True,
+        index=True,
+        server_default=sa.text("nextval('articles_public_id_seq'::regclass)"),
     )
     # Multilingual title (JSONB: {"uz": "...", "ru": "...", "en": "..."})
     title: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)

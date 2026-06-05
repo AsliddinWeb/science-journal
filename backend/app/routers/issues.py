@@ -21,13 +21,24 @@ from app.models.volume import Issue, Volume
 router = APIRouter(prefix="/api/issues", tags=["issues"])
 
 
+def _issue_filter(issue_id: str):
+    """Match an issue by either short integer public_id or full UUID."""
+    try:
+        return Issue.public_id == int(issue_id)
+    except ValueError:
+        try:
+            return Issue.id == uuid.UUID(issue_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
+
+
 @router.get("/{issue_id}")
-async def get_issue(issue_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> dict:
+async def get_issue(issue_id: str, db: AsyncSession = Depends(get_db)) -> dict:
     issue = (
         await db.execute(
             select(Issue)
             .options(selectinload(Issue.volume))
-            .where(Issue.id == issue_id)
+            .where(_issue_filter(issue_id))
         )
     ).scalar_one_or_none()
     if not issue:
@@ -44,6 +55,7 @@ async def get_issue(issue_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     volume = issue.volume
     return {
         "id": issue.id,
+        "public_id": issue.public_id,
         "volume_id": issue.volume_id,
         "number": issue.number,
         "published_date": issue.published_date,

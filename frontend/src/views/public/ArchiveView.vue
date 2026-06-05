@@ -141,7 +141,7 @@ function toggleVolume(id: string) {
               <RouterLink
                 v-for="issue in volume.issues"
                 :key="issue.id"
-                :to="`/issue/view/${issue.id}`"
+                :to="`/issue/view/${issue.public_id ?? issue.id}`"
                 class="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
               >
                 <div class="flex items-center gap-3">

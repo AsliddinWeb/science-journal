@@ -186,6 +186,7 @@ class ArticleRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    public_id: int  # short integer used in OJS-style URLs (/article/view/<n>)
     title: dict
     abstract: dict
     keywords: Any  # list[str] OR {"uz": [...], "ru": [...], "en": [...]}
@@ -228,6 +229,7 @@ class ArticleListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    public_id: int
     title: dict
     abstract: dict
     keywords: Any

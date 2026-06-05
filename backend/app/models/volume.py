@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, date
+import sqlalchemy as sa
 from sqlalchemy import String, Text, Boolean, DateTime, Integer, Date, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -38,6 +39,15 @@ class Issue(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # Short integer id used in public URLs (OJS-style /issue/view/<n>).
+    # See migration 017 for the sequence definition.
+    public_id: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        unique=True,
+        index=True,
+        server_default=sa.text("nextval('issues_public_id_seq'::regclass)"),
     )
     volume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("volumes.id", ondelete="CASCADE"),

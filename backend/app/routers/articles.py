@@ -22,6 +22,19 @@ import uuid
 router = APIRouter(prefix="/api/articles", tags=["articles"])
 
 
+def _article_filter(article_id: str):
+    """SQLAlchemy filter that matches an article by either short integer
+    public_id (used in OJS-style URLs) or full UUID — so the public API
+    accepts both `/api/articles/123` and `/api/articles/<uuid>`."""
+    try:
+        return Article.public_id == int(article_id)
+    except ValueError:
+        try:
+            return Article.id == uuid.UUID(article_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+
 @router.get("", response_model=PaginatedResponse[ArticleListItem])
 async def list_articles(
     page: int = Query(1, ge=1),
@@ -234,11 +247,12 @@ async def get_article_status(
 
 @router.get("/{article_id}", response_model=ArticleRead)
 async def get_article(
-    article_id: uuid.UUID,
+    article_id: str,
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> Article:
-    """Get a single article by ID. Increments view_count for published articles."""
+    """Get a single article by integer public_id or full UUID. Increments
+    view_count for published articles."""
     query = (
         select(Article)
         .options(
@@ -249,7 +263,7 @@ async def get_article(
             selectinload(Article.category),
             selectinload(Article.issue),
         )
-        .where(Article.id == article_id)
+        .where(_article_filter(article_id))
     )
     result = await db.execute(query)
     article = result.scalar_one_or_none()
@@ -266,7 +280,7 @@ async def get_article(
     if article.status == ArticleStatus.published:
         await db.execute(
             update(Article)
-            .where(Article.id == article_id)
+            .where(Article.id == article.id)
             .values(view_count=Article.view_count + 1)
         )
         # Invalidate cached stats when view count changes
@@ -438,25 +452,25 @@ async def submit_revision(
 
 
 @router.post("/{article_id}/view")
-async def increment_view(article_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> dict:
-    """Increment view count for a published article."""
-    result = await db.execute(select(Article).where(Article.id == article_id))
+async def increment_view(article_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+    """Increment view count. Accepts integer public_id or UUID."""
+    result = await db.execute(select(Article).where(_article_filter(article_id)))
     article = result.scalar_one_or_none()
     if not article or article.status != ArticleStatus.published:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
     await db.execute(
-        update(Article).where(Article.id == article_id).values(view_count=Article.view_count + 1)
+        update(Article).where(Article.id == article.id).values(view_count=Article.view_count + 1)
     )
     return {"ok": True}
 
 
 @router.get("/{article_id}/download")
 async def download_article(
-    article_id: uuid.UUID,
+    article_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Get a presigned download URL and increment download count."""
-    result = await db.execute(select(Article).where(Article.id == article_id))
+    """Get a presigned download URL. Accepts integer public_id or UUID."""
+    result = await db.execute(select(Article).where(_article_filter(article_id)))
     article = result.scalar_one_or_none()
 
     if not article or article.status != ArticleStatus.published:
@@ -467,7 +481,7 @@ async def download_article(
 
     await db.execute(
         update(Article)
-        .where(Article.id == article_id)
+        .where(Article.id == article.id)
         .values(download_count=Article.download_count + 1)
     )
 

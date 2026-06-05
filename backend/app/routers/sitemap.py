@@ -62,14 +62,14 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
 
     try:
         articles_result = await db.execute(
-            select(Article.id, Article.updated_at)
+            select(Article.public_id, Article.updated_at)
             .where(Article.status == ArticleStatus.published)
             .order_by(Article.published_date.desc())
         )
         articles = articles_result.all()
 
         issues_result = await db.execute(
-            select(Issue.id, Issue.published_date)
+            select(Issue.public_id, Issue.published_date)
             .order_by(Issue.published_date.desc().nulls_last())
         )
         issues = issues_result.all()
@@ -90,15 +90,15 @@ async def sitemap(db: AsyncSession = Depends(get_db)) -> Response:
         for path, priority, freq in STATIC_PATHS:
             lines.append(_url_entry(f"{SITE_URL}/{journal_slug}{path}", changefreq=freq, priority=priority))
 
-        # Issue pages — OJS-canonical `/issue/view/{id}` form.
-        for issue_id, published_date in issues:
-            loc = f"{SITE_URL}/{journal_slug}/issue/view/{issue_id}"
+        # Issue pages — OJS-canonical `/issue/view/{public_id}` form.
+        for public_id, published_date in issues:
+            loc = f"{SITE_URL}/{journal_slug}/issue/view/{public_id}"
             lastmod = published_date.isoformat() if published_date else None
             lines.append(_url_entry(loc, lastmod=lastmod, changefreq="monthly", priority="0.7"))
 
-        # Article pages — OJS-canonical `/article/view/{id}` form.
-        for article_id, updated_at in articles:
-            loc = f"{SITE_URL}/{journal_slug}/article/view/{article_id}"
+        # Article pages — OJS-canonical `/article/view/{public_id}` form.
+        for public_id, updated_at in articles:
+            loc = f"{SITE_URL}/{journal_slug}/article/view/{public_id}"
             lastmod = updated_at.isoformat() if updated_at else None
             lines.append(_url_entry(loc, lastmod=lastmod, changefreq="monthly", priority="0.8"))
 

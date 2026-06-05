@@ -159,17 +159,17 @@ function applyAllMeta() {
     description: abstractEn.slice(0, 160),
     keywords: kwList.join(', '),
     ogImage: `/api/og-image/${a.id}`,
-    ogUrl: `${window.location.origin}/${siteInfo.journalSlug}/article/view/${a.id}`,
-    canonical: `${window.location.origin}/${siteInfo.journalSlug}/article/view/${a.id}`,
+    ogUrl: `${window.location.origin}/${siteInfo.journalSlug}/article/view/${(a as any).public_id ?? a.id}`,
+    canonical: `${window.location.origin}/${siteInfo.journalSlug}/article/view/${(a as any).public_id ?? a.id}`,
     type: 'article',
   })
-  const brand = { siteName: siteInfo.siteName, issn: siteInfo.issn, logoUrl: siteInfo.logoUrl }
+  const brand = { siteName: siteInfo.siteName, issn: siteInfo.issn, logoUrl: siteInfo.logoUrl, journalSlug: siteInfo.journalSlug }
   injectLd([
     buildScholarlyArticle(a, brand),
     buildBreadcrumb([
       { name: 'Home', url: `/${siteInfo.journalSlug}/index` },
       { name: 'Articles', url: `/${siteInfo.journalSlug}/articles` },
-      { name: titleEn, url: `/${siteInfo.journalSlug}/article/view/${a.id}` },
+      { name: titleEn, url: `/${siteInfo.journalSlug}/article/view/${(a as any).public_id ?? a.id}` },
     ]),
   ])
 
@@ -202,7 +202,7 @@ function applyAllMeta() {
     lastpage,
     doi: a.doi || undefined,
     pdfUrl,
-    abstractHtmlUrl: `/${siteInfo.journalSlug}/article/view/${a.id}`,
+    abstractHtmlUrl: `/${siteInfo.journalSlug}/article/view/${(a as any).public_id ?? a.id}`,
     language: a.language,
     keywords: kwList,
     publisher: journalTitle,
@@ -306,7 +306,7 @@ const citationText = computed(() => {
     : ''
   const pages = a.pages || ''
   const doi = a.doi ? `https://doi.org/${a.doi}` : ''
-  const articleUrl = typeof window !== 'undefined' ? window.location.href : `/${siteInfo.journalSlug}/article/view/${a.id}`
+  const articleUrl = typeof window !== 'undefined' ? window.location.href : `/${siteInfo.journalSlug}/article/view/${(a as any).public_id ?? a.id}`
 
   // APA-style: Authors (Year). Title. Journal, Vol(Issue), Pages. DOI \n URL
   const parts: string[] = []
