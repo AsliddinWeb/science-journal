@@ -41,6 +41,7 @@ class HomeSettingsRead(BaseModel):
     issn_online: Optional[str] = None
     issn_print: Optional[str] = None
     license_type: Optional[str] = None
+    journal_abbrev: Optional[str] = None
     announcement_uz: Optional[str] = None
     announcement_ru: Optional[str] = None
     announcement_en: Optional[str] = None
@@ -78,6 +79,7 @@ class HomeSettingsUpdate(BaseModel):
     issn_online: Optional[str] = None
     issn_print: Optional[str] = None
     license_type: Optional[str] = None
+    journal_abbrev: Optional[str] = None
     announcement_uz: Optional[str] = None
     announcement_ru: Optional[str] = None
     announcement_en: Optional[str] = None

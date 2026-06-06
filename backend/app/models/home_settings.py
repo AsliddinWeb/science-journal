@@ -52,6 +52,9 @@ class HomeSettings(Base):
     issn_online: Mapped[str | None] = mapped_column(String(50), nullable=True)
     issn_print: Mapped[str | None] = mapped_column(String(50), nullable=True)
     license_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Short journal abbreviation surfaced as citation_journal_abbrev
+    # (e.g. "IGSIIT"). Editor-supplied — see migration 018.
+    journal_abbrev: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Announcement banner
     announcement_uz: Mapped[str | None] = mapped_column(Text, nullable=True)

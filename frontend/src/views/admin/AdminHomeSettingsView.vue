@@ -52,6 +52,7 @@ const form = ref({
   issn_online: '',
   issn_print: '',
   license_type: '',
+  journal_abbrev: '',
   announcement_uz: '',
   announcement_ru: '',
   announcement_en: '',
@@ -101,6 +102,7 @@ onMounted(async () => {
       issn_online: data.issn_online || '',
       issn_print: data.issn_print || '',
       license_type: data.license_type || '',
+      journal_abbrev: data.journal_abbrev || '',
       announcement_uz: data.announcement_uz || '',
       announcement_ru: data.announcement_ru || '',
       announcement_en: data.announcement_en || '',
@@ -459,7 +461,7 @@ async function uploadHeroPoster(e: Event) {
               <input type="file" accept="image/*" class="hidden" @change="uploadImage" />
             </label>
           </div>
-          <div class="grid grid-cols-3 gap-4">
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
               <label class="label-base">ISSN (Online)</label>
               <input v-model="form.issn_online" class="input-base w-full font-mono" placeholder="2181-0842" />
@@ -467,6 +469,11 @@ async function uploadHeroPoster(e: Event) {
             <div>
               <label class="label-base">ISSN (Print)</label>
               <input v-model="form.issn_print" class="input-base w-full font-mono" placeholder="" />
+            </div>
+            <div>
+              <label class="label-base">Jurnal qisqartmasi</label>
+              <input v-model="form.journal_abbrev" class="input-base w-full font-mono" placeholder="IGSIIT" />
+              <p class="mt-1 text-xs text-slate-500">Scholar uchun citation_journal_abbrev</p>
             </div>
             <div>
               <label class="label-base">{{ t('admin.homeSettings.license') }}</label>

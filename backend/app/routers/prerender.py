@@ -136,6 +136,7 @@ async def prerender_article(
     issn_print = ""
     publisher = ""
     license_type = ""
+    journal_abbrev = ""
     journal_slug = "academic-book-journal"
     if hs_row:
         site_name_en = _pick(hs_row.site_name, "en") or _pick(hs_row.hero_title, "en")
@@ -146,6 +147,7 @@ async def prerender_article(
         issn_print = (hs_row.issn_print or "").strip()
         publisher = site_name_en or site_name_uz
         license_type = (hs_row.license_type or "").strip()
+        journal_abbrev = (hs_row.journal_abbrev or "").strip()
     # Scholar uses a single ISSN — prefer online (e-ISSN) over print.
     issn = issn_online or issn_print
 
@@ -227,6 +229,8 @@ async def prerender_article(
         citation_meta.append(f'<meta name="citation_online_date" content="{_e(pub_date)}">')
     if journal_title:
         citation_meta.append(f'<meta name="citation_journal_title" content="{_e(journal_title)}">')
+    if journal_abbrev:
+        citation_meta.append(f'<meta name="citation_journal_abbrev" content="{_e(journal_abbrev)}">')
     if issn_online:
         citation_meta.append(f'<meta name="citation_issn" content="{_e(issn_online)}">')
     if issn_print and issn_print != issn_online:
@@ -269,9 +273,14 @@ async def prerender_article(
     # ── Dublin Core metadata (DC.*) ──
     # OAI-PMH / Scholar fallback set. Mirrors what OJS-based journals emit.
     dc_meta: list[str] = []
+    # DC.Title is the primary-language title; alternates go under
+    # DC.Title.Alternative with xml:lang. This is the layout OJS-based
+    # journals (and OAI-PMH consumers) expect.
     dc_meta.append(f'<meta name="DC.Title" content="{_e(title)}">')
     for k, v in titles_by_lang.items():
-        dc_meta.append(f'<meta name="DC.Title" xml:lang="{k}" content="{_e(v)}">')
+        if v == title:
+            continue
+        dc_meta.append(f'<meta name="DC.Title.Alternative" xml:lang="{k}" content="{_e(v)}">')
     for a in authors:
         dc_meta.append(f'<meta name="DC.Creator.PersonalName" content="{_e(a["name"])}">')
     if iso_created:
