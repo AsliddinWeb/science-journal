@@ -118,8 +118,14 @@ async def robots(db: AsyncSession = Depends(get_db)) -> PlainTextResponse:
         select(HomeSettings.journal_slug).where(HomeSettings.id == "default")
     )
     journal_slug = hs_result.scalar_one_or_none() or "academic-book-journal"
+    # `Allow:` is listed BEFORE the broader `Disallow: /api/` so crawlers
+    # following the longest-match rule (Google, Bing, Scholar) keep access
+    # to article PDFs at /api/uploads/... — without this Scholar reads
+    # citation_pdf_url but the path is robots-blocked, so it can't extract
+    # full text.
     content = f"""User-agent: *
 Allow: /
+Allow: /api/uploads/
 Disallow: /admin
 Disallow: /api/
 Disallow: /author
